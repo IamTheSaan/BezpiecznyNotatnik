@@ -5,7 +5,7 @@
 
 struct NoteData {
     std::string sender;
-    std::string content;
-    bool burnOnRead;
     int64_t expirationTime;
+    bool burnOnRead;
+    std::string content;
 };

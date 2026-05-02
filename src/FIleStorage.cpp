@@ -1,0 +1,42 @@
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <FileStorage.hpp>
+
+namespace fs = std::filesystem;
+
+bool FileStorage::saveFile(std:: string recipeint, std::string id, NoteData data) {
+    try {
+        // Tworzymy ścieżkę do folderu użytkownika
+        fs::path userPath = fs::path(basePath) / recipeint;
+
+        // Jeśli folder nie istnieje to go tworzymy
+        if (!fs::exists(userPath)) {
+            fs::create_directory(userPath);
+        }
+
+        std::string fileName = id + ".bin";
+        fs::path filePath = userPath / fileName;
+
+        //Otwieramy plik do zapisu
+        std::ofstream outFile(filePath, std::ios::binary);
+        outFile << data.sender << "\n";
+        outFile << data.expirationTime << "\n";
+        outFile << data.burnOnRead << "\n";
+        outFile << data.content;
+        outFile.close();
+        return true;
+    }
+    catch (const fs::filesystem_error& e) {
+        std::cerr << "Blad podczas zapisu: " << e.what();
+        return false;
+    }
+}
+
+std::vector<NoteData> FileStorage::readFiles(std::string user) {
+    // do napisania
+}
+
+bool FileStorage::deleteFile(std::string path) {
+    // do napisania
+}

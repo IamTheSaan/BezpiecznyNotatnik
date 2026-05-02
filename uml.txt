@@ -1,5 +1,5 @@
-# Kod do diagramu uml
-# Do wizualizacji na mermaid.live
+// Kod do diagramu uml
+// Do wizualizacji na mermaid.live
 
 classDiagram
     class ServerApp {
@@ -53,6 +53,7 @@ classDiagram
         +string sender
         +string encryptedContent
         +long expirationTime
+        +bool burnOnRead
     }
 
     class CleanupService {
