@@ -1,0 +1,71 @@
+# Kod do diagramu uml
+# Do wizualizacji na mermaid.live
+
+classDiagram
+    class ServerApp {
+        -httplib::Server svr
+        -AuthHandler auth
+        -NoteManager noteMgr
+        +start(int port)
+        -setupRoutes()
+    }
+
+    class AuthHandler {
+        -map~string, UserCredentials~ nameToCredentials
+        -map~string, string~ tokenToName
+        -string dbPath
+        +register(string user, string pass) bool
+        +login(string user, string pass) string
+        +authenticate(const Request& req) string
+        +logout(string token)
+        -hash(string pass, string salt) string
+        -saveDb() void
+        -loadDb() void
+    }
+
+    class UserCredentials {
+        +string passwordHash
+        +string salt
+    }
+
+    class NoteManager {
+        -CryptoProvider crypto
+        -FileStorage storage
+        +sendNote(string from, string to, string text, int ttl) bool
+        +getInbox(string username) vector~NoteData~
+    }
+
+    class CryptoProvider {
+        -string serverMasterKey
+        +encrypt(string data) string
+        +decrypt(string data) string
+        +generateId() string
+    }
+
+    class FileStorage {
+        -string basePath
+        +saveFile(string recipient, string id, NoteData data) bool
+        +readFiles(string user) vector~NoteData~
+        +deleteFile(string path) bool
+    }
+
+    class NoteData {
+        +string sender
+        +string encryptedContent
+        +long expirationTime
+    }
+
+    class CleanupService {
+        -FileStorage storage
+        -int checkInterval
+        +run() void
+    }
+
+    ServerApp *-- AuthHandler : weryfikuje dostęp
+    ServerApp *-- NoteManager : zarządza danymi
+    ServerApp *-- CleanupService : sprząta w tle
+    AuthHandler ..> UserCredentials
+    NoteManager *-- CryptoProvider : szyfruje
+    NoteManager *-- FileStorage : zapisuje w folderach
+    FileStorage ..> NoteData : struktura pliku
+    CleanupService --> FileStorage : usuwa wygasłe
