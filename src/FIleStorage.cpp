@@ -5,10 +5,10 @@
 
 namespace fs = std::filesystem;
 
-bool FileStorage::saveFile(std:: string recipeint, std::string id, NoteData data) {
+bool FileStorage::saveFile(std:: string recipient, std::string id, NoteData data) {
     try {
         // Tworzymy ścieżkę do folderu użytkownika
-        fs::path userPath = fs::path(basePath) / recipeint;
+        fs::path userPath = fs::path(basePath) / recipient;
 
         // Jeśli folder nie istnieje to go tworzymy
         if (!fs::exists(userPath)) {
@@ -20,6 +20,11 @@ bool FileStorage::saveFile(std:: string recipeint, std::string id, NoteData data
 
         //Otwieramy plik do zapisu
         std::ofstream outFile(filePath, std::ios::binary);
+        //Masz to w binary otwarte a potem wpisujesz znak \n i to sie gryzie
+        if(!outFile.good()){
+            std::cerr<<"Plik sie nie otworzyl";
+            return false;
+        }
         outFile << data.sender << "\n";
         outFile << data.expirationTime << "\n";
         outFile << data.burnOnRead << "\n";
@@ -34,7 +39,40 @@ bool FileStorage::saveFile(std:: string recipeint, std::string id, NoteData data
 }
 
 std::vector<NoteData> FileStorage::readFiles(std::string user) {
-    // do napisania
+    std::vector<NoteData> notes;
+    try {
+        fs::path userPath = fs::path(basePath) / user;
+        if (!fs::exists(userPath))return notes;
+
+        for (const auto& entry : fs::directory_iterator(userPath)) {
+            if (entry.is_regular_file()) {
+                std::ifstream inFile(entry.path());
+                if (!inFile.is_open()) continue;
+
+                NoteData data;
+                std::string line;
+                std::getline(inFile, data.sender);
+                std::getline(inFile, line);
+                data.expirationTime = std::stoll(line);
+                std::getline(inFile, line);
+                if(line=="1") data.burnOnRead=true;
+                else data.burnOnRead=false;
+                std::string content, temp;
+                while (std::getline(inFile, temp)) {
+                    content += temp;
+                    if (!inFile.eof()) content += "\n";
+                }
+                data.content = content;
+
+                notes.push_back(data);
+            }
+        }
+    }
+    catch (const fs::filesystem_error& e) {
+        std::cerr << "Blad podczas odczytu: " << e.what();
+    }
+
+    return notes;
 }
 
 bool FileStorage::deleteFile(std::string path) {
