@@ -22,7 +22,7 @@ bool FileStorage::saveFile(std:: string recipient, std::string id, NoteData data
         std::ofstream outFile(filePath, std::ios::binary);
         //Masz to w binary otwarte a potem wpisujesz znak \n i to sie gryzie
         if(!outFile.good()){
-            std::cerr<<"Plik sie nie otworzyl";
+            std::cerr << "Plik sie nie otworzyl\n";
             return false;
         }
         outFile << data.sender << "\n";
@@ -33,7 +33,7 @@ bool FileStorage::saveFile(std:: string recipient, std::string id, NoteData data
         return true;
     }
     catch (const fs::filesystem_error& e) {
-        std::cerr << "Blad podczas zapisu: " << e.what();
+        std::cerr << "Blad podczas zapisu: " << e.what() << "\n";
         return false;
     }
 }
@@ -69,12 +69,18 @@ std::vector<NoteData> FileStorage::readFiles(std::string user) {
         }
     }
     catch (const fs::filesystem_error& e) {
-        std::cerr << "Blad podczas odczytu: " << e.what();
+        std::cerr << "Blad podczas odczytu: " << e.what() << "\n";
     }
 
     return notes;
 }
 
 bool FileStorage::deleteFile(std::string path) {
-    // do napisania
+    try {
+        return fs::remove(path);
+    }
+    catch (const fs::filesystem_error& e) {
+        std::cerr << "Blad podczas usuwania pliku: " << e.what() << "\n";
+        return false;
+    }
 }
