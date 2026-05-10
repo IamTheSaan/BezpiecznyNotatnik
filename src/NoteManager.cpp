@@ -26,8 +26,7 @@ std::vector<NoteData> NoteManager::getInbox(std::string username) {
 
         // Obsługa burnOnRead
         if (note.burnOnRead) {
-            std::string path = "data/vault/" + username + "/" + note.id + ".bin";
-            storage.deleteFile(path);
+            storage.deleteById(username, note.id);
         }
     }
     return notes;

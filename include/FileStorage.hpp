@@ -12,4 +12,5 @@ public:
     bool saveFile(std::string recipient, NoteData data);
     std::vector<NoteData> readFiles(std::string user);
     bool deleteFile(std::string path);
+    bool deleteById(std::string user, std::string id);
 };

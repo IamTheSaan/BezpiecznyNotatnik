@@ -86,3 +86,14 @@ bool FileStorage::deleteFile(std::string path) {
         return false;
     }
 }
+
+bool FileStorage::deleteById(std::string user, std::string id) {
+    try {
+        fs::path path = fs::path(basePath) / user / (id + ".bin");
+        return fs::remove(path);
+    }
+    catch (const fs::filesystem_error& e) {
+        std::cerr << "Blad podczas usuwania pliku: " << e.what() << "\n";
+        return false;
+    }
+}
