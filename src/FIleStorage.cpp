@@ -5,7 +5,7 @@
 
 namespace fs = std::filesystem;
 
-bool FileStorage::saveFile(std:: string recipient, std::string id, NoteData data) {
+bool FileStorage::saveFile(std::string recipient, NoteData data) {
     try {
         // Tworzymy ścieżkę do folderu użytkownika
         fs::path userPath = fs::path(basePath) / recipient;
@@ -15,7 +15,7 @@ bool FileStorage::saveFile(std:: string recipient, std::string id, NoteData data
             fs::create_directory(userPath);
         }
 
-        std::string fileName = id + ".bin";
+        std::string fileName = data.id + ".bin";
         fs::path filePath = userPath / fileName;
 
         //Otwieramy plik do zapisu
@@ -25,6 +25,7 @@ bool FileStorage::saveFile(std:: string recipient, std::string id, NoteData data
             std::cerr << "Plik sie nie otworzyl\n";
             return false;
         }
+        outFile << data.id << "\n";
         outFile << data.sender << "\n";
         outFile << data.expirationTime << "\n";
         outFile << data.burnOnRead << "\n";
@@ -51,6 +52,7 @@ std::vector<NoteData> FileStorage::readFiles(std::string user) {
 
                 NoteData data;
                 std::string line;
+                std::getline(inFile, data.id);
                 std::getline(inFile, data.sender);
                 std::getline(inFile, line);
                 data.expirationTime = std::stoll(line);
