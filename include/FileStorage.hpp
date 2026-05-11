@@ -13,4 +13,5 @@ public:
     std::vector<NoteData> readFiles(std::string user);
     bool deleteFile(std::string path);
     bool deleteById(std::string user, std::string id);
+    std::string getBasePath() { return basePath; } // do testów
 };
