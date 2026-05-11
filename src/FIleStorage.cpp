@@ -20,7 +20,6 @@ bool FileStorage::saveFile(std::string recipient, NoteData data) {
 
         //Otwieramy plik do zapisu
         std::ofstream outFile(filePath);
-        //Masz to w binary otwarte a potem wpisujesz znak \n i to sie gryzie
         if(!outFile.good()){
             std::cerr << "Plik sie nie otworzyl\n";
             return false;

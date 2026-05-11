@@ -16,10 +16,13 @@ std::string CryptoProvider::decrypt(const std::string data) {
 }
 
 std::string CryptoProvider::generateId() {
+    const std::string CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     static std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(0, 999999);
+    static std::uniform_int_distribution<int> dist(0, CHARACTERS.size() - 1);
 
-    std::string id;
-    id="ID_"+std::to_string(dist(rng));
+    std::string id = "";
+    for (int i = 0; i < 10; i++) {
+        id += CHARACTERS[(dist(rng))];
+    }
     return id;
 }
