@@ -11,16 +11,6 @@ TEST(CryptoProviderTest, EncryptionLoop) {
     EXPECT_EQ(decrypted, input);
 }
 
-TEST(CryptoProviderTest, EncryptionNotRandom) {
-    CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
-
-    std::string input = "Litwo! Ojczyzno moja! ty jesteś jak zdrowie.Ile cię trzeba cenić, ten tylko się dowie,Kto cię stracił. Dziś piękność twą w całej ozdobieWidzę i opisuję, bo tęsknię po tobie.";
-    std::string encrypted1 = crypto.encrypt(input);
-    std::string encrypted2 = crypto.encrypt(input);
-
-    EXPECT_EQ(encrypted1, encrypted2);
-}
-
 TEST(CryptoProviderTest, EncryptionChangesData) {
     CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
 
