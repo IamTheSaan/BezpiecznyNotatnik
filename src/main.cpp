@@ -1,28 +1,49 @@
 #include "httplib.h"
 #include "NoteManager.hpp"
 #include <iostream>
+#include <json.hpp>
+
+using json = nlohmann::json;
 
 int main() {
     httplib::Server svr;
     NoteManager manager;
 
-    svr.Get("/", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("Serwer działa i pozdrawia!", "text/plain; charset=utf-8");
-    });
+    if (!svr.set_mount_point("/", "./public")) {
+        std::cerr << "Błąd: Folder ./public nie istnieje lub brak dostępu!\n";
+        return 1;
+    }
 
     svr.Post("/send", [&](const httplib::Request& req, httplib::Response& res) {
-        if (req.has_param("from") && req.has_param("to") && req.has_param("text")) {
-            std::string from = req.get_param_value("from");
-            std::string to   = req.get_param_value("to");
-            std::string text = req.get_param_value("text");
+        json responseJson;
+        try {
+            json inputJson = json::parse(req.body);
 
-            manager.sendNote(from, to, text, 3600, false); // ttl i burnonread tymczasowo na stałe
-            
-            res.set_content("Zapisano notatke!", "text/plain");
-        } else {
+            // Sprawdzenie czy json zawiera wymagane pola
+            if (!inputJson.contains("from") || !inputJson.contains("to") || !inputJson.contains("text")) {
+                res.status = 400;
+                responseJson["error"] = "Brak wymaganych pól w JSON";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            std::string from = inputJson["from"];
+            std::string to = inputJson["to"];
+            std::string text = inputJson["text"];
+
+            if (manager.sendNote(from, to, text, 3600, false)) {
+                res.status = 201;
+                responseJson["status"] = "success";
+            } else {
+                res.status = 500;
+                responseJson["error"] = "Bład zapisu w StorageManager";
+            }
+        } catch (const json::exception& e) {
             res.status = 400;
-            res.set_content("Blad: Brak danych w Body!", "text/plain");
+            responseJson["error"] = "Blad w JSON: " + std::string(e.what());
         }
+
+        res.set_content(responseJson.dump(), "application/json; charset=utf-8");
     });
 
     svr.Get("/inbox", [&](const httplib::Request& req, httplib::Response& res) {
@@ -30,11 +51,17 @@ int main() {
         
         auto notes = manager.getInbox(user);
         
-        std::string odpowiedz = "Skrzynka uzytkownika " + user + ":\n";
-        for (const auto& n : notes) {
-            odpowiedz += "Od [" + n.sender + "]: " + n.content + "\n";
+        // Utowrzenie tablicy JSON
+        json responseArray = json::array();
+        
+        for (const auto& note : notes) {
+            json noteJson;
+            noteJson["sender"] = note.sender;
+            noteJson["content"] = note.content;
+            responseArray.push_back(noteJson);
         }
-        res.set_content(odpowiedz, "text/plain");
+        
+        res.set_content(responseArray.dump(), "application/json; charset=utf-8");
     });
 
     std::cout << "Serwer nasluchuje na porcie 8080\n";

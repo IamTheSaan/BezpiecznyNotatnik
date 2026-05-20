@@ -133,7 +133,7 @@ std::string CryptoProvider::generateId() {
     static std::uniform_int_distribution<int> dist(0, CHARACTERS.size() - 1);
 
     std::string id = "";
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 16; i++) {
         id += CHARACTERS[(dist(rng))];
     }
     return id;
