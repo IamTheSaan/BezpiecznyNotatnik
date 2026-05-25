@@ -3,9 +3,38 @@
 #include <stdexcept>
 #include <cstring>
 #include <algorithm>
+#include <memory>
+
+Context::Context(std::unique_ptr<CryptoProvider> strategy) : strategy_(std::move(strategy)) {}
+
+void Context::setStrategy(std::unique_ptr<CryptoProvider> newStrategy){
+    strategy_ = std::move(newStrategy);
+}
+
+std::string Context::encrypt(const std::string& data) const {
+    if(!strategy_) throw std::runtime_error("Brak wybranej strategii szyfrowania");
+    return strategy_->encrypt(data);
+}
+
+std::string Context::decrypt(const std::string& data) const {
+    if(!strategy_) throw std::runtime_error("Brak wybranej strategii deszyfrowania");
+    return strategy_->decrypt(data);
+}
+
+std::string Context::generateId() {
+    const std::string CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    static std::mt19937 rng(std::random_device{}());
+    static std::uniform_int_distribution<int> dist(0, CHARACTERS.size() - 1);
+
+    std::string id = "";
+    for (int i = 0; i < 16; i++) {
+        id += CHARACTERS[(dist(rng))];
+    }
+    return id;
+}
 
 // Resize klucza
-CryptoProvider::CryptoProvider(std::string key) {
+ChaCha20::ChaCha20(std::string key){
     masterKey.resize(8, 0);
     for (size_t i = 0; i < 32 && i < key.length(); ++i) {
         masterKey[i / 4] |= (static_cast<uint32_t>(static_cast<uint8_t>(key[i])) << (8 * (i % 4)));
@@ -13,12 +42,12 @@ CryptoProvider::CryptoProvider(std::string key) {
 }
 
 // Rotacja bitowa w lewo
-uint32_t CryptoProvider::rotl(uint32_t value, int shift) {
+uint32_t ChaCha20::rotl(uint32_t value, int shift) {
     return (value << shift) | (value >> (32 - shift));
 }
 
 // Operacja ARX
-void CryptoProvider::quarterRound(uint32_t& a, uint32_t& b, uint32_t& c, uint32_t& d) {
+void ChaCha20::quarterRound(uint32_t& a, uint32_t& b, uint32_t& c, uint32_t& d) {
     a += b; d ^= a; d = rotl(d, 16);
     c += d; b ^= c; b = rotl(b, 12);
     a += b; d ^= a; d = rotl(d, 8);
@@ -26,7 +55,7 @@ void CryptoProvider::quarterRound(uint32_t& a, uint32_t& b, uint32_t& c, uint32_
 }
 
 // Główna funkcja generująca 64-bajtowy blok
-std::vector<uint8_t> CryptoProvider::chacha20Block(uint32_t counter, const std::vector<uint8_t>& nonce) {
+std::vector<uint8_t> ChaCha20::chacha20Block(uint32_t counter, const std::vector<uint8_t>& nonce) const{
     uint32_t state[16];
     
     // Stałe "expand 32-byte k"
@@ -83,7 +112,7 @@ std::vector<uint8_t> CryptoProvider::chacha20Block(uint32_t counter, const std::
     return block;
 }
 
-std::string CryptoProvider::process(const std::string& data, const std::vector<uint8_t>& nonce) {
+std::string ChaCha20::process(const std::string& data, const std::vector<uint8_t>& nonce) const{
     std::string result = data;
     uint32_t counter = 0;
 
@@ -99,7 +128,7 @@ std::string CryptoProvider::process(const std::string& data, const std::vector<u
     return result;
 }
 
-std::string CryptoProvider::encrypt(const std::string& data) {
+std::string ChaCha20::encrypt(const std::string& data) const{
     std::vector<uint8_t> nonce(12);
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> dist(0, 255);
@@ -114,7 +143,7 @@ std::string CryptoProvider::encrypt(const std::string& data) {
     return result;
 }
 
-std::string CryptoProvider::decrypt(const std::string& data) {
+std::string ChaCha20::decrypt(const std::string& data) const{
 
     if (data.size() < 12) {
         throw std::runtime_error("Ciphertext is too short (missing nonce)!");
@@ -125,16 +154,19 @@ std::string CryptoProvider::decrypt(const std::string& data) {
     std::string cipherText = data.substr(12);
 
     return process(cipherText, nonce);
-}
+} 
 
-std::string CryptoProvider::generateId() {
-    const std::string CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    static std::mt19937 rng(std::random_device{}());
-    static std::uniform_int_distribution<int> dist(0, CHARACTERS.size() - 1);
-
-    std::string id = "";
-    for (int i = 0; i < 16; i++) {
-        id += CHARACTERS[(dist(rng))];
+XOR::XOR(std::string key):key(std::move(key)){}
+std::string XOR::encrypt(const std::string& data) const{
+    std::string result=data;
+    for(size_t i=0;i<data.size();i++){
+        result[i]=key[i%key.size()]^data[i];
     }
-    return id;
+    return result;
 }
+
+std::string XOR::decrypt(const std::string& data) const{
+    return encrypt(data);
+}
+
+
