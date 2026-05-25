@@ -26,7 +26,7 @@ TEST(CryptoProviderTest, GenerateIdLength) {
 
     std::string id = crypto.generateId();
 
-    EXPECT_EQ(id.length(), 10);
+    EXPECT_EQ(id.length(), 16);
 }
 
 TEST(CryptoProviderTest, GenerateIdCharacters) {
