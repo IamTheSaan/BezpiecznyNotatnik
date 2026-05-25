@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
+#include <memory>
 #include <CryptoProvider.hpp>
 
 TEST(CryptoProviderTest, EncryptionLoop) {
-    CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
+    Context crypto(std::make_unique<ChaCha20>("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR"));
 
     std::string input = "Litwo! Ojczyzno moja! ty jesteś jak zdrowie.Ile cię trzeba cenić, ten tylko się dowie,Kto cię stracił. Dziś piękność twą w całej ozdobieWidzę i opisuję, bo tęsknię po tobie.";
     std::string encrypted = crypto.encrypt(input);
@@ -12,7 +13,7 @@ TEST(CryptoProviderTest, EncryptionLoop) {
 }
 
 TEST(CryptoProviderTest, EncryptionChangesData) {
-    CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
+    Context crypto(std::make_unique<ChaCha20>("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR"));
 
     std::string input = "Litwo! Ojczyzno moja! ty jesteś jak zdrowie.Ile cię trzeba cenić, ten tylko się dowie,Kto cię stracił. Dziś piękność twą w całej ozdobieWidzę i opisuję, bo tęsknię po tobie.";
     std::string encrypted = crypto.encrypt(input);
@@ -21,7 +22,7 @@ TEST(CryptoProviderTest, EncryptionChangesData) {
 }
 
 TEST(CryptoProviderTest, GenerateIdLength) {
-    CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
+    Context crypto(std::make_unique<ChaCha20>("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR"));
 
     std::string id = crypto.generateId();
 
@@ -29,7 +30,7 @@ TEST(CryptoProviderTest, GenerateIdLength) {
 }
 
 TEST(CryptoProviderTest, GenerateIdCharacters) {
-    CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
+    Context crypto(std::make_unique<ChaCha20>("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR"));
 
     std::string id = crypto.generateId();
     std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -40,7 +41,7 @@ TEST(CryptoProviderTest, GenerateIdCharacters) {
 }
 
 TEST(CryptoProviderTest, GenerateIdDifferentValues) {
-    CryptoProvider crypto("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR");
+    Context crypto(std::make_unique<ChaCha20>("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR"));
 
     std::string id1 = crypto.generateId();
     std::string id2 = crypto.generateId();
