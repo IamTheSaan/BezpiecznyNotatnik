@@ -24,8 +24,9 @@ private:
     const std::string SECRET_KEY = "SekretnyKlucz123";
 
 public:
-    AuthHandler(const std::string& path);
-    bool registerUser(const std::string& username, const std::string& password) {std::cout << "Zarejestrowano " << username << " " << password; return true;} // register jest zarezerowwane :(
+    AuthHandler(const std::string& path) : dbPath(path) {}
+    bool registerUser(const std::string& username, const std::string& password) {std::cout << "Zarejestrowano " << username << " " << password; return true;}
+    // register jest zarezerowwane :(, zwraca true jeśli zarejestrowano, false jeśli użytkownik o podanej nazwie już istneje
     std::string login(const std::string& username, const std::string& password) {return "Token123";} // zwraca token lub ""
     std::string authenticate(const std::string& token) {return "User123";} // zwraca username lub ""
     // void logout(string token); Wylogowanie realizuje teraz frontend (usunięcie tokenu)
