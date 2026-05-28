@@ -99,6 +99,8 @@ int main() {
             if (from.empty()) {
                 res.status = 401;
                 responseJson["error"] = "Brak tokenu lub token wygasł. Zaloguj się ponownie";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
             }
 
             // Sprawdzenie czy json zawiera wymagane pola

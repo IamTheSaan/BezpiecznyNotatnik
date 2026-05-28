@@ -1,20 +1,128 @@
 // Inicjalizacja edytora
-const quill = new Quill('#editor', {
-    theme: 'snow'
+const quill = new Quill("#editor", {
+    theme: "snow"
 });
 
-async function sendNote() {
-    const from = document.getElementById('fromUser').value;
-    const to = document.getElementById('toUser').value;
-    const statusDiv = document.getElementById('status');
+// Zarządzanie widokami - logowanie/rejestrcja lub właściwa aplikacja
+function checkAuth() {
+    const token = localStorage.getItem("jwt_token");
+    if (token) {
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("appSection").classList.remove("hidden");
+    } else {
+        document.getElementById("authSection").classList.remove("hidden");
+        document.getElementById("appSection").classList.add("hidden");
+    }
+}
+
+async function register() {
+    const user = document.getElementById("login").value;
+    const pass = document.getElementById("password").value;
+    const statusDiv = document.getElementById("authStatus");
+
+    if (!user || !pass) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = "Podaj login oraz hasło!";
+        return;
+    }
+
+    statusDiv.style.color = "black";
+    statusDiv.innerText = "Rejestracja...";
+
+    try {
+        const response = await fetch("/register", {
+            method: "POST",
+            headers: {"Content-Type": "application/json; charset=utf-8"},
+            body: JSON.stringify({username: user, password: pass}) // Konwersja obiektu JS na string JSON
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === "success") {
+            statusDiv.style.color = "green";
+            statusDiv.innerText = "Konto utowrzone. Możesz się teraz zalogować.";
+        } else {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "Błąd serwera: " + result.error;
+        }
+    } catch (error) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = "Błąd: Brak odpowiedzi ze strony serwera C++.";
+    }
+}
+
+async function login() {
+    const user = document.getElementById("login").value;
+    const pass = document.getElementById("password").value;
+    const statusDiv = document.getElementById("authStatus");
+
+    if (!user || !pass) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = "Podaj login oraz hasło!";
+        return;
+    }
+
+    statusDiv.style.color = "black";
+    statusDiv.innerText = "Logowanie...";
+
+    try {
+        const response = await fetch("/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json; charset=utf-8"},
+            body: JSON.stringify({username: user, password: pass}) // Konwersja obiektu JS na string JSON
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === "success") {
+            localStorage.setItem("jwt_token", result.token);
+
+            // Usunięcie danych z pól logowania
+            document.getElementById("login").value = "";
+            document.getElementById("password").value = "";
+            statusDiv.innerText = "";
+
+            checkAuth(); // Przełącza widok na aplikację
+        } else {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "Błąd serwera: " + result.error;
+        }
+    } catch (error) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = error;
+    }
+}
+
+function logout() {
+    localStorage.removeItem("jwt_token");
     
+    // Czyszczenie pól i komunikatów
+    document.getElementById("toUser").value = "";
+    document.getElementById("sendStatus").innerText = "";
+    // Czyszczenie edytora i skrzynki
+    quill.setText("");
+    document.getElementById("messages").innerHTML = "";
+    document.getElementById("")
+
+    checkAuth(); // powrót do logowania
+}
+
+async function sendNote() {
+    const token = localStorage.getItem("jwt_token");
+    const to = document.getElementById("toUser").value;
+    const statusDiv = document.getElementById("sendStatus");
     // Wyciągnięcie sformatowanego tekstu z edytora
     const textHTML = quill.root.innerHTML;
 
-    // Walidacja pól formularza
-    if (!from || !to || quill.getText().length === 0) {
+    if (!token) {
         statusDiv.style.color = "red";
-        statusDiv.innerText = "Wszystkie pola muszą być wypełnione!";
+        statusDiv.innerText = "Zaloguj się!";
+        return;
+    }
+    // Walidacja pól formularza
+    if (!to || quill.getText().length === 0) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = "Podaj odbiorcę i treść notatki!";
         return;
     }
 
@@ -23,17 +131,14 @@ async function sendNote() {
 
     // Przygotowanie obiektu z danymi
     const payload = {
-        from: from,
         to: to,
         text: textHTML
     };
 
     try {
-        const response = await fetch('/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            },
+        const response = await fetch("/send", {
+            method: "POST",
+            headers: {"Content-Type": "application/json; charset=utf-8", "Authorization": token},
             body: JSON.stringify(payload) // Konwersja obiektu JS na string JSON
         });
 
@@ -44,12 +149,11 @@ async function sendNote() {
             statusDiv.innerText = "Sukces! Notatka została wysłana.";
             
             // Czyszczenie pól i edytora
-            quill.setText('');
-            document.getElementById('fromUser').value = '';
-            document.getElementById('toUser').value = '';
+            quill.setText("");
+            document.getElementById("toUser").value = "";
         } else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + (result.error || "Nie udało się zapisać zasobu.");
+            statusDiv.innerText = "Błąd serwera: " + result.error;
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -58,32 +162,39 @@ async function sendNote() {
 }
 
 async function getNotes() {
-    const user = document.getElementById("checkUser").value;
-    const messagesDiv = document.getElementById('messages');
+    const token = localStorage.getItem('jwt_token');
+    const messagesDiv = document.getElementById("messages");
 
-    if (!user) {
-        messagesDiv.innerHTML = '<p style="color: red;">Błąd: Podaj login!</p>';
+    if (!token) {
+        messagesDiv.innerHTML = "<p style='color: red'>Zaloguj się!</p>";
         return;
     }
 
     messagesDiv.innerHTML = "<p>Pobieranie wiadomości...</p>";
 
     try {
-        const response = await fetch(`/inbox?user=${user}`);
+        const response = await fetch("/inbox", {
+            method: "GET",
+            headers: {"Authorization": token}
+        });
         
-        // Zwraca tablicę JSON
-        const notes = await response.json();
+        const result = await response.json();
 
-        if (notes.length === 0) {
+        if (!response.ok) {
+            if (response.status === 401) logout();
+            messagesDiv.innerHTML = `<p style="color: red">Błąd serwera: ${result.error}</p>`;
+            return;
+        }
+
+        if (result.length === 0) {
             messagesDiv.innerHTML = '<p>Twoja skrzynka odbiorcza jest pusta.</p>';
             return;
         }
 
-        // Czyszczenie komunikatu ładowania
         messagesDiv.innerHTML = "";
-        notes.forEach(note => {
+        result.forEach(note => {
             // Tworzymy nowy element div dla pojedynczej notatki
-            const noteDiv = document.createElement('div');
+            const noteDiv = document.createElement("div");
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
@@ -94,6 +205,8 @@ async function getNotes() {
         });
 
     } catch (error) {
-        messagesDiv.innerHTML = '<p style="color: red;">Błąd: Nie udało się pobrać poczty.</p>';
+        messagesDiv.innerHTML = "<p style='color: red;'>Błąd: Nie udało się pobrać poczty.</p>";
     }
 }
+
+checkAuth(); // Uruchamiane po otawciu strony

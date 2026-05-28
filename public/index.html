@@ -4,40 +4,42 @@
     <meta charset="UTF-8">
     <title>Bezpieczny notatnik!</title>
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <style>
+        .hidden {display: none;}
+    </style>
 </head>
 <body>
-    <h2>Wyślij bezpieczną notatkę</h2>
-
-    <div class="field">
-        <label for="fromUser">Od kogo:</label>
-        <input type="text" id="fromUser" placeholder="Twój login">
+    <div id="authSection">
+        <h2>Logowanie / Rejestracja</h2>
+        <div class="field">
+            <input type="text" id="login" placeholder="Twój login">
+        </div>
+        <div class="field">
+            <input type="password" id="password" placeholder="Twoje hasło">
+        </div>
+        <button onclick="login()">Zaloguj się</button>
+        <button onclick="register()">Zarejestruj się</button>
+        <div id="authStatus"></div>
     </div>
 
-    <div class="field">
-        <label for="toUser">Do kogo:</label>
-        <input type="text" id="toUser" placeholder="Login odbiorcy">
+    <div id="appSection" style=>
+        <button onclick="logout()">Wyloguj się</button>
+
+        <h2>Wyślij bezpieczną notatkę</h2>
+        <div class="field">
+            <input type="text" id="toUser" placeholder="Login odbiorcy">
+        </div>
+        <div class="field">
+            <label>Treść notatki:</label>
+            <div id="editor"></div>
+        </div>
+        <button onclick="sendNote()">Wyślij</button>
+        <div id="sendStatus"></div>
+
+        <h2>Sprawdź skrzynkę</h2>
+        <button onclick="getNotes()">Pobierz wiadomości</button>
+        <div id="messages"></div>
     </div>
-
-    <div class="field">
-        <label>Treść notatki:</label>
-        <div id="editor"></div>
-    </div>
-
-    <button onclick="sendNote()">Wyślij</button>
-
-    <div id="status"></div>
-
-    <h2>Sprawdź skrzynkę</h2>
-
-    <div class="field">
-        <label for="checkUser">Twój login:</label>
-        <input type="text" id="checkUser" placeholder="Login">
-    </div>
-
-    <button onclick="getNotes()">Pobierz wiadomości</button>
-
-    <div id="messages"></div>
-
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <script src="index.js"></script>
 </body>
