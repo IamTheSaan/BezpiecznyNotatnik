@@ -30,8 +30,20 @@
             <input type="text" id="toUser" placeholder="Login odbiorcy">
         </div>
         <div class="field">
-            <label>Treść notatki:</label>
+            <label for="editor">Treść notatki:</label>
             <div id="editor"></div>
+        </div>
+        <div class="field">
+            <label for="ttl">Czas ważności notatki:</label>
+            <select id="ttl">
+                <option value="30">30 sekund</option> <!--Do testów-->
+                <option value="3600">1 godzina</option>
+                <option value="86400">24 godziny</option>
+                <option value="604800">7 dni</option>
+            </select>
+        </div>
+        <div class="field">
+            <input type="checkbox" id="burnOnRead">Usunąć natychmiast po przeczytaniu (Burn on read)?
         </div>
         <button onclick="sendNote()">Wyślij</button>
         <div id="sendStatus"></div>

@@ -3,6 +3,8 @@
 #include "AuthHandler.hpp"
 #include <iostream>
 #include <json.hpp>
+#include <chrono>
+#include <format>
 
 using json = nlohmann::json;
 
@@ -104,7 +106,7 @@ int main() {
             }
 
             // Sprawdzenie czy json zawiera wymagane pola
-            if (!inputJson.contains("to") || !inputJson.contains("text")) {
+            if (!inputJson.contains("to") || !inputJson.contains("text") || !inputJson.contains("ttl") || !inputJson.contains("burn")) {
                 res.status = 400;
                 responseJson["error"] = "Brak wymaganych pól w JSON";
                 res.set_content(responseJson.dump(), "application/json; charset=utf-8");
@@ -113,8 +115,10 @@ int main() {
 
             std::string to = inputJson["to"];
             std::string text = inputJson["text"];
+            int ttl = inputJson["ttl"];
+            bool burnOnRead = inputJson["burn"];
 
-            if (manager.sendNote(from, to, text, 3600, false)) {
+            if (manager.sendNote(from, to, text, ttl, burnOnRead)) {
                 res.status = 201;
                 responseJson["status"] = "success";
             } else {
@@ -149,8 +153,16 @@ int main() {
         
         for (const auto& note : notes) {
             json noteJson;
+            noteJson["id"] = note.id;
             noteJson["sender"] = note.sender;
             noteJson["content"] = note.content;
+            noteJson["burn"] = note.burnOnRead;
+
+            std::chrono::sys_seconds timePoint{std::chrono::seconds(note.expirationTime)};
+            auto localTimePoint = std::chrono::current_zone()->to_local(timePoint);
+            std::string date = std::format("{:%Y-%m-%d %H:%M:%S}", localTimePoint);
+            noteJson["ttl"] = date;
+
             responseArray.push_back(noteJson);
         }
         

@@ -110,6 +110,8 @@ function logout() {
 async function sendNote() {
     const token = localStorage.getItem("jwt_token");
     const to = document.getElementById("toUser").value;
+    const ttl = parseInt(document.getElementById("ttl").value);
+    const burnOnRead = document.getElementById("burnOnRead").checked;
     const statusDiv = document.getElementById("sendStatus");
     // Wyciągnięcie sformatowanego tekstu z edytora
     const textHTML = quill.root.innerHTML;
@@ -132,6 +134,8 @@ async function sendNote() {
     // Przygotowanie obiektu z danymi
     const payload = {
         to: to,
+        burn: burnOnRead,
+        ttl: ttl,
         text: textHTML
     };
 
@@ -151,6 +155,7 @@ async function sendNote() {
             // Czyszczenie pól i edytora
             quill.setText("");
             document.getElementById("toUser").value = "";
+            document.getElementById("burnOnRead").checked = false;
         } else {
             statusDiv.style.color = "red";
             statusDiv.innerText = "Błąd serwera: " + result.error;
@@ -198,7 +203,10 @@ async function getNotes() {
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
-                <div>Od: <b>${note.sender}</b></div>
+                <div>ID: ${note.id}</div>
+                <div>Od: ${note.sender}</div>
+                <div>Wygasa: ${note.ttl}</div>
+                <div>BurnOnRead: ${note.burn ? "TAK" : "NIE"}</div>
                 <div">${note.content}</div>`;
 
             messagesDiv.appendChild(noteDiv);
