@@ -1,0 +1,115 @@
+#include "AuthHandler.hpp"
+#include <random>
+#include <chrono>
+#include <fstream>
+#include <iostream>
+
+AuthHandler::AuthHandler(const std::string& path) : dbPath(path) {
+    loadDb();
+}
+
+std::string AuthHandler::hash(const std::string& pass, const std::string& salt) {
+    std::string combined = pass + salt;
+    std::hash<std::string> hasher;
+    return std::to_string(hasher(combined)); 
+    // To bedzie jeszcze zmieniane albo na funkcje z biblioteki OpenSSL albo na jakis header only funkcje z Githuba
+}
+
+
+std::string generateSalt() {
+    const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, CHARACTERS.size()-1);
+    
+    std::string salt = "";
+    for (int i = 0; i < 16; i++) {
+        salt += CHARACTERS[dist(rng)];
+    }
+    return salt;
+}
+
+bool AuthHandler::registerUser(const std::string& username, const std::string& password) {
+    if (nameToCredentials.find(username)!=nameToCredentials.end()) {
+        std::cout << "Uzytkownik " << username << " juz istnieje.\n";
+        return false; 
+    }
+
+    std::string salt = generateSalt();
+    std::string hashedPassword = hash(password, salt);
+
+
+    UserCredentials creds = {hashedPassword, salt};
+    nameToCredentials[username] = creds;
+
+    saveDb();
+    
+    std::cout << "Pomyslnie zarejestrowano uzytkownika: " << username << "\n";
+    return true;
+}
+
+std::string AuthHandler::login(const std::string& username, const std::string& password) {
+    auto it = nameToCredentials.find(username);
+    if (it == nameToCredentials.end()) {
+        return "";
+    }
+
+    UserCredentials creds = it->second;
+    std::string attemptedHash = hash(password, creds.salt);
+
+    if (attemptedHash != creds.passwordHash) {
+        return "";
+    }
+
+    auto token = jwt::create<jwt_traits>()
+        .set_issuer("auth_server")
+        .set_type("JWS")
+        .set_payload_claim("username", username)
+        .set_expires_at(std::chrono::system_clock::now() + std::chrono::minutes(15)) 
+        .sign(jwt::algorithm::hs256{SECRET_KEY});
+
+    return token;
+}
+
+std::string AuthHandler::authenticate(const std::string& token) {
+    if (token.empty()) return "";
+
+    try {
+        auto decoded = jwt::decode<jwt_traits>(token);
+        auto verifier = jwt::verify<jwt_traits>()
+            .allow_algorithm(jwt::algorithm::hs256{SECRET_KEY})
+            .with_issuer("auth_server");
+        
+        verifier.verify(decoded);
+        return decoded.get_payload_claim("username").as_string();
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Błąd autentykacji: " << e.what() << "\n";
+        return "";
+    }
+}
+
+void AuthHandler::saveDb() {
+    nlohmann::json j = nameToCredentials;
+    
+    std::ofstream file(dbPath);
+    if (file.is_open()) {
+        file << j.dump(4);
+        file.close();
+    } else {
+        std::cerr << "Nie udalo sie otworzyc pliku bazy do zapisu: " << dbPath << "\n";
+    }
+}
+
+void AuthHandler::loadDb() {
+    std::ifstream file(dbPath);
+    if (file.is_open()) {
+        nlohmann::json j;
+        try {
+            file >> j;
+            nameToCredentials = j.get<std::map<std::string, UserCredentials>>();
+        } catch (const nlohmann::json::exception& e) {
+            std::cerr << "Blad parsowania bazy uzytkownikow: " << e.what() << "\n";
+        }
+        file.close();
+    }
+}

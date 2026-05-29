@@ -7,7 +7,6 @@
 #include "json.hpp"
 #include "jwt-cpp/jwt.h"
 #include "jwt-cpp/traits/nlohmann-json/traits.h"
-#include <iostream> // do usunięcia
 
 using jwt_traits = jwt::traits::nlohmann_json;
 
@@ -16,20 +15,20 @@ struct UserCredentials {
     std::string salt;
 };
 
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(UserCredentials, passwordHash, salt)
+
 class AuthHandler {
 private:
     std::map<std::string, UserCredentials> nameToCredentials; // username -> hasło i sól
-    // map<string, string> tokenToName; Zastąpione przez JWT
     std::string dbPath;
     const std::string SECRET_KEY = "SekretnyKlucz123";
-
-public:
-    AuthHandler(const std::string& path) : dbPath(path) {}
-    bool registerUser(const std::string& username, const std::string& password) {std::cout << "Zarejestrowano " << username << " " << password; return true;}
-    // register jest zarezerowwane :(, zwraca true jeśli zarejestrowano, false jeśli użytkownik o podanej nazwie już istneje
-    std::string login(const std::string& username, const std::string& password) {return "Token123";} // zwraca token lub ""
-    std::string authenticate(const std::string& token) {return "User123";} // zwraca username lub ""
-    // void logout(string token); Wylogowanie realizuje teraz frontend (usunięcie tokenu)
+    std::string hash(const std::string& pass, const std::string& salt);
     void saveDb();
     void loadDb();
+public:
+    AuthHandler(const std::string& path);
+    bool registerUser(const std::string& username, const std::string& password);
+    // register jest zarezerowwane :(, zwraca true jeśli zarejestrowano, false jeśli użytkownik o podanej nazwie już istneje
+    std::string login(const std::string& username, const std::string& password); // zwraca token lub ""
+    std::string authenticate(const std::string& token); // zwraca username lub ""
 };
