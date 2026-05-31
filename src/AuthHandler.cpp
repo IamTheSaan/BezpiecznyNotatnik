@@ -3,16 +3,32 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <openssl/evp.h>
 
 AuthHandler::AuthHandler(const std::string& path) : dbPath(path) {
     loadDb();
 }
 
 std::string AuthHandler::hash(const std::string& pass, const std::string& salt) {
-    std::string combined = pass + salt;
-    std::hash<std::string> hasher;
-    return std::to_string(hasher(combined)); 
-    // To bedzie jeszcze zmieniane albo na funkcje z biblioteki OpenSSL albo na jakis header only funkcje z Githuba
+    const int iterations = 10000;
+    const int  key_lenght = 32;
+    unsigned char hashResult[key_lenght];
+    
+    if(PKCS5_PBKDF2_HMAC(pass.c_str(),
+                         pass.length(),
+                         reinterpret_cast<const unsigned char*>(salt.c_str()),
+                         salt.length(),
+                         iterations,
+                         EVP_sha256(),
+                         key_lenght,
+                         hashResult)==0) throw std::runtime_error("Blad hashowania");
+    std::stringstream ss;
+    for(int i=0;i<key_lenght;i++){
+        ss<<std::hex<<std::setw(2)<<std::setfill('0')<<static_cast<int>(hashResult[i]);
+    }
+    return ss.str();
 }
 
 
@@ -64,7 +80,7 @@ std::string AuthHandler::login(const std::string& username, const std::string& p
         .set_issuer("auth_server")
         .set_type("JWS")
         .set_payload_claim("username", username)
-        .set_expires_at(std::chrono::system_clock::now() + std::chrono::minutes(15)) 
+        .set_expires_at(std::chrono::system_clock::now() + std::chrono::minutes(30)) 
         .sign(jwt::algorithm::hs256{SECRET_KEY});
 
     return token;

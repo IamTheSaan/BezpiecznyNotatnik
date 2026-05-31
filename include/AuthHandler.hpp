@@ -2,7 +2,6 @@
 #include <string>
 #include <map>
 
-// Integracja jwt-cpp z nlohmann/json (mam nadzieję, że działa, nie testowane)
 #define JWT_DISABLE_PICOJSON
 #include "json.hpp"
 #include "jwt-cpp/jwt.h"
