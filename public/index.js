@@ -205,6 +205,8 @@ async function getNotes() {
             return;
         }
 
+        result.sort((a, b) => (b.burn === true) - (a.burn === true));
+
         messagesDiv.innerHTML = "";
         result.forEach(note => {
             // Tworzymy nowy element div dla pojedynczej notatki
