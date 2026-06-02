@@ -19,7 +19,7 @@ async function checkAuth() {
         document.getElementById("authSection").classList.add("hidden");
         document.getElementById("appSection").classList.remove("hidden");
         const username = await getUsername();
-        document.getElementById("username").innerText = username || "Nieznany użytkownik";
+        document.getElementById("username").innerText = username;
     } else {
         document.getElementById("authSection").classList.remove("hidden");
         document.getElementById("appSection").classList.add("hidden");
@@ -237,9 +237,9 @@ async function getNotes() {
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
-                <div>Od: ${note.sender}</div>
-                <div>Wygasa: ${note.ttl}</div>
-                <div>BurnOnRead: ${note.burn ? "TAK" : "NIE"}</div>
+                <div><b>Od: </b>${note.sender}</div>
+                ${('ttl' in note) ? `<div><b>Wygasa: </b>${note.ttl}</div>` : ''} 
+                ${note.burn ? `<div style='color: orange;'>BurnOnRead</div>` : ''}
                 <div>${note.content}</div>
                 ${deleteButton}`;
 

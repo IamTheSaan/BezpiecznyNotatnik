@@ -16,5 +16,5 @@ public:
     bool sendNote(std::string from, std::string to, std::string text, int secondsToLive, bool burnOnRead);
     bool deleteNote(std::string user, std::string id);
     std::vector<NoteData> getInbox(std::string username);
-    FileStorage& getStorage() { return storage; } // do testów
+    FileStorage& getStorage() { return storage; }
 };

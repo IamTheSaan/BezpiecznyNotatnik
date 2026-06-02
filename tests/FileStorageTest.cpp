@@ -48,13 +48,3 @@ TEST_F(FileStorageTest, EmptyNotes) {
     auto notes = storage->readFiles("EmptyUser");
     EXPECT_TRUE(notes.empty());
 }
-
-TEST_F(FileStorageTest, Delete) {
-    NoteData data = {"IdABC", "A", 0, false, "B"};
-    storage->saveFile("UserC", data);
-    std::string path = testPath + "/UserC/IdABC.bin";
-    
-    ASSERT_TRUE(fs::exists(path));
-    EXPECT_TRUE(storage->deleteFile(path));
-    EXPECT_FALSE(fs::exists(path));
-}

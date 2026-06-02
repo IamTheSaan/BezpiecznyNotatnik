@@ -1,6 +1,7 @@
 #include "httplib.h"
 #include "NoteManager.hpp"
 #include "AuthHandler.hpp"
+#include "CleanupService.hpp"
 #include <iostream>
 #include <json.hpp>
 #include <chrono>
@@ -18,7 +19,9 @@ std::string extractToken(const httplib::Request& req) {
 int main() {
     httplib::Server svr;
     NoteManager manager;
+    FileStorage& storage = manager.getStorage();
     AuthHandler auth("data/users.db");
+    CleanupService cleanup(storage, 30);
 
     svr.Post("/register", [&](const httplib::Request& req, httplib::Response& res) {
         json responseJson;
@@ -153,10 +156,12 @@ int main() {
             noteJson["content"] = note.content;
             noteJson["burn"] = note.burnOnRead;
 
-            std::chrono::sys_seconds timePoint{std::chrono::seconds(note.expirationTime)};
-            auto localTimePoint = std::chrono::current_zone()->to_local(timePoint);
-            std::string date = std::format("{:%Y-%m-%d %H:%M:%S}", localTimePoint);
-            noteJson["ttl"] = date;
+            if (note.expirationTime > 0) {
+                std::chrono::sys_seconds timePoint{std::chrono::seconds(note.expirationTime)};
+                auto localTimePoint = std::chrono::current_zone()->to_local(timePoint);
+                std::string date = std::format("{:%Y-%m-%d %H:%M:%S}", localTimePoint);
+                noteJson["ttl"] = date;
+            }
 
             responseArray.push_back(noteJson);
         }
@@ -224,7 +229,11 @@ svr.Delete("/delete", [&](const httplib::Request& req, httplib::Response& res) {
         res.set_content(responseJson.dump(), "application/json; charset=utf-8");
     });
 
+    cleanup.start();
+
     std::cout << "Serwer nasluchuje na porcie 8080\n";
     svr.listen("0.0.0.0", 8080);
+
+    cleanup.stop();
     return 0;
 }
