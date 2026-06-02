@@ -45,7 +45,7 @@ int main() {
             }
         } catch (const json::exception& e) {
             res.status = 400;
-            responseJson["error"] = "Blad w JSON: " + std::string(e.what());
+            responseJson["error"] = "Nieprawidłowy format JSON";
         }
 
         res.set_content(responseJson.dump(), "application/json; charset=utf-8");
@@ -79,7 +79,7 @@ int main() {
             }
         } catch (const json::exception& e) {
             res.status = 400;
-            responseJson["error"] = "Blad w JSON: " + std::string(e.what());
+            responseJson["error"] = "Nieprawidłowy format JSON";
         }
 
         res.set_content(responseJson.dump(), "application/json; charset=utf-8");
@@ -118,11 +118,11 @@ int main() {
                 responseJson["status"] = "success";
             } else {
                 res.status = 500;
-                responseJson["error"] = "Bład zapisu w StorageManager";
+                responseJson["error"] = "Wystąpił błąd podczas zapisu";
             }
         } catch (const json::exception& e) {
             res.status = 400;
-            responseJson["error"] = "Blad w JSON: " + std::string(e.what());
+            responseJson["error"] = "Nieprawidłowy format JSON";
         }
 
         res.set_content(responseJson.dump(), "application/json; charset=utf-8");
@@ -183,6 +183,46 @@ int main() {
         std::cerr << "Błąd: Folder ./public nie istnieje lub brak dostępu!\n";
         return 1;
     }
+
+svr.Delete("/delete", [&](const httplib::Request& req, httplib::Response& res) {
+        json responseJson;
+        try {
+            json inputJson = json::parse(req.body);
+
+            std::string token = extractToken(req);
+            std::string user = auth.authenticate(token);
+
+            if (user.empty()) {
+                res.status = 401;
+                responseJson["error"] = "Brak tokenu lub token wygasł. Zaloguj się ponownie";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            // Sprawdzenie czy json zawiera wymagane pola
+            if (!inputJson.contains("id")) {
+                res.status = 400;
+                responseJson["error"] = "Brak wymaganych pól w JSON";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            std::string id = inputJson["id"];
+
+            if (manager.deleteNote(user, id)) {
+                res.status = 200;
+                responseJson["status"] = "success";
+            } else {
+                res.status = 500;
+                responseJson["error"] = "Wystąpił błąd podczas usuwania";
+            }
+        } catch (const json::exception& e) {
+            res.status = 400;
+            responseJson["error"] = "Nieprawidłowy format JSON";
+        }
+
+        res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+    });
 
     std::cout << "Serwer nasluchuje na porcie 8080\n";
     svr.listen("0.0.0.0", 8080);

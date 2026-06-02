@@ -166,8 +166,11 @@ async function sendNote() {
             document.getElementById("toUser").value = "";
             document.getElementById("burnOnRead").checked = false;
         } else {
+            if (response.status === 401) logout();
+            else {
             statusDiv.style.color = "red";
             statusDiv.innerText = "Błąd: " + result.error;
+            }
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -182,6 +185,7 @@ async function saveNote() {
     if (!username) {
         statusDiv.style.color = "red";
         statusDiv.innerText = "Błąd: Nie udało pobrać się loginu.";
+        return;
     }
 
     document.getElementById("toUser").value = username;
@@ -209,7 +213,7 @@ async function getNotes() {
 
         if (!response.ok) {
             if (response.status === 401) logout();
-            messagesDiv.innerHTML = `<p style="color: red">Błąd: ${result.error}</p>`;
+            else messagesDiv.innerHTML = `<p style="color: red">Błąd: ${result.error}</p>`;
             return;
         }
 
@@ -224,20 +228,56 @@ async function getNotes() {
         result.forEach(note => {
             // Tworzymy nowy element div dla pojedynczej notatki
             const noteDiv = document.createElement("div");
+            noteDiv.id = note.id;
+
+            let deleteButton = "";
+            if (!note.burn) {
+                deleteButton = `<button onclick="deleteNote('${note.id}')">Usuń</button>`;
+            }
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
-                <div>ID: ${note.id}</div>
                 <div>Od: ${note.sender}</div>
                 <div>Wygasa: ${note.ttl}</div>
                 <div>BurnOnRead: ${note.burn ? "TAK" : "NIE"}</div>
-                <div">${note.content}</div>`;
+                <div>${note.content}</div>
+                ${deleteButton}`;
 
             messagesDiv.appendChild(noteDiv);
         });
 
     } catch (error) {
         messagesDiv.innerHTML = "<p style='color: red;'>Błąd: Nie udało się pobrać poczty.</p>";
+    }
+}
+
+async function deleteNote(id) {
+    const token = localStorage.getItem("jwt_token");
+
+    if (!token) {
+        checkAuth();
+        return;
+    }
+
+    try {
+        const response = await fetch("/delete", {
+            method: "DELETE",
+            headers: {"Content-Type": "application/json; charset=utf-8", "Authorization": token},
+            body: JSON.stringify({id: id}) // Konwersja obiektu JS na string JSON
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === "success") {
+            const note = document.getElementById(id)
+            if (note) {
+                note.remove();
+            }
+        } else {
+            if (response.status === 401) logout();
+        }
+    } catch (error) {
+        console.log(error);
     }
 }
 

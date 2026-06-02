@@ -18,6 +18,11 @@ bool NoteManager::sendNote(std::string from, std::string to, std::string text, i
     return storage.saveFile(to, data);
 }
 
+bool NoteManager::deleteNote(std::string user, std::string id) {
+    return storage.deleteById(user, id);
+}
+
+
 std::vector<NoteData> NoteManager::getInbox(std::string username) {
     std::vector<NoteData> notes = storage.readFiles(username);
 
