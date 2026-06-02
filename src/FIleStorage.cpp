@@ -5,14 +5,14 @@
 
 namespace fs = std::filesystem;
 
-bool FileStorage::saveFile(std::string recipient, NoteData data) {
+bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
     try {
         // Tworzymy ścieżkę do folderu użytkownika
         fs::path userPath = fs::path(basePath) / recipient;
 
         // Jeśli folder nie istnieje to go tworzymy
         if (!fs::exists(userPath)) {
-            fs::create_directory(userPath);
+            fs::create_directories(userPath);
         }
 
         std::string fileName = data.id + ".bin";
@@ -38,7 +38,7 @@ bool FileStorage::saveFile(std::string recipient, NoteData data) {
     }
 }
 
-std::vector<NoteData> FileStorage::readFiles(std::string user) {
+std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
     std::vector<NoteData> notes;
     try {
         fs::path userPath = fs::path(basePath) / user;
@@ -76,7 +76,7 @@ std::vector<NoteData> FileStorage::readFiles(std::string user) {
     return notes;
 }
 
-bool FileStorage::deleteFile(std::string path) {
+bool FileStorage::deleteFile(const std::string& path) {
     try {
         return fs::remove(path);
     }
@@ -86,7 +86,7 @@ bool FileStorage::deleteFile(std::string path) {
     }
 }
 
-bool FileStorage::deleteById(std::string user, std::string id) {
+bool FileStorage::deleteById(const std::string& user, const std::string& id) {
     try {
         fs::path path = fs::path(basePath) / user / (id + ".bin");
         return fs::remove(path);
