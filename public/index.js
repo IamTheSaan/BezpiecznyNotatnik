@@ -1,6 +1,15 @@
 // Inicjalizacja edytora
 const quill = new Quill("#editor", {
-    theme: "snow"
+    theme: "snow",
+    modules: {
+    toolbar: [
+      [{ header: [1, 2, false] }],
+      ['bold', 'italic', 'underline'],
+      ['image', 'code-block', 'link'],
+      [{ list: 'ordered'}, { list: 'bullet'}]
+    ],
+  },
+  placeholder: 'Tutaj napisz wiadomość...',
 });
 
 // Zarządzanie widokami - logowanie/rejestrcja lub właściwa aplikacja
