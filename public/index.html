@@ -1,7 +1,5 @@
-<!-- Latest compiled and minified CSS -->
+<!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Latest compiled JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 <!DOCTYPE html>
@@ -30,6 +28,7 @@
     </div>
 
     <div id="appSection" style=>
+        <div>Zalogowano jako: <b id="username"></b></div>
         <button onclick="logout()">Wyloguj się</button>
 
         <h2>Wyślij bezpieczną notatkę</h2>
@@ -52,6 +51,7 @@
             <input type="checkbox" id="burnOnRead">Usunąć natychmiast po przeczytaniu (Burn on read)?
         </div>
         <button onclick="sendNote()">Wyślij</button>
+        <button onclick="saveNote()">Zapisz u siebie</button>
         <div id="sendStatus"></div>
 
         <h2>Sprawdź skrzynkę</h2>

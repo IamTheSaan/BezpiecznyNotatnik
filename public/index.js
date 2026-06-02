@@ -13,11 +13,13 @@ const quill = new Quill("#editor", {
 });
 
 // Zarządzanie widokami - logowanie/rejestrcja lub właściwa aplikacja
-function checkAuth() {
+async function checkAuth() {
     const token = localStorage.getItem("jwt_token");
     if (token) {
         document.getElementById("authSection").classList.add("hidden");
         document.getElementById("appSection").classList.remove("hidden");
+        const username = await getUsername();
+        document.getElementById("username").innerText = username || "Nieznany użytkownik";
     } else {
         document.getElementById("authSection").classList.remove("hidden");
         document.getElementById("appSection").classList.add("hidden");
@@ -52,7 +54,7 @@ async function register() {
             statusDiv.innerText = "Konto utowrzone. Możesz się teraz zalogować.";
         } else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + result.error;
+            statusDiv.innerText = "Błąd: " + result.error;
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -78,7 +80,7 @@ async function login() {
         const response = await fetch("/login", {
             method: "POST",
             headers: {"Content-Type": "application/json; charset=utf-8"},
-            body: JSON.stringify({username: user, password: pass}) // Konwersja obiektu JS na string JSON
+            body: JSON.stringify({username: user, password: pass})
         });
 
         const result = await response.json();
@@ -94,7 +96,7 @@ async function login() {
             checkAuth(); // Przełącza widok na aplikację
         } else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + result.error;
+            statusDiv.innerText = "Błąd: " + result.error;
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -111,7 +113,6 @@ function logout() {
     // Czyszczenie edytora i skrzynki
     quill.setText("");
     document.getElementById("messages").innerHTML = "";
-    document.getElementById("")
 
     checkAuth(); // powrót do logowania
 }
@@ -126,8 +127,7 @@ async function sendNote() {
     const textHTML = quill.root.innerHTML;
 
     if (!token) {
-        statusDiv.style.color = "red";
-        statusDiv.innerText = "Zaloguj się!";
+        checkAuth();
         return;
     }
     // Walidacja pól formularza
@@ -167,7 +167,7 @@ async function sendNote() {
             document.getElementById("burnOnRead").checked = false;
         } else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + result.error;
+            statusDiv.innerText = "Błąd: " + result.error;
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -175,12 +175,25 @@ async function sendNote() {
     }
 }
 
+async function saveNote() {
+    const statusDiv = document.getElementById("sendStatus");
+    const username = document.getElementById("username").innerText;
+
+    if (!username) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = "Błąd: Nie udało pobrać się loginu.";
+    }
+
+    document.getElementById("toUser").value = username;
+    sendNote();
+}
+
 async function getNotes() {
     const token = localStorage.getItem('jwt_token');
     const messagesDiv = document.getElementById("messages");
 
     if (!token) {
-        messagesDiv.innerHTML = "<p style='color: red'>Zaloguj się!</p>";
+        checkAuth();
         return;
     }
 
@@ -196,7 +209,7 @@ async function getNotes() {
 
         if (!response.ok) {
             if (response.status === 401) logout();
-            messagesDiv.innerHTML = `<p style="color: red">Błąd serwera: ${result.error}</p>`;
+            messagesDiv.innerHTML = `<p style="color: red">Błąd: ${result.error}</p>`;
             return;
         }
 
@@ -225,6 +238,28 @@ async function getNotes() {
 
     } catch (error) {
         messagesDiv.innerHTML = "<p style='color: red;'>Błąd: Nie udało się pobrać poczty.</p>";
+    }
+}
+
+async function getUsername() {
+    const token = localStorage.getItem("jwt_token");
+    
+    if (!token) return "";
+
+    try {
+        const response = await fetch("/username", {
+            method: "GET",
+            headers: {"Authorization": token}
+        });
+        const result = await response.json();
+
+        if (response.ok) {
+            return result.username;
+        } else {
+            return "";
+        }
+    } catch (error) {
+        return "";
     }
 }
 

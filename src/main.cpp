@@ -20,11 +20,6 @@ int main() {
     NoteManager manager;
     AuthHandler auth("data/users.db");
 
-    if (!svr.set_mount_point("/", "./public")) {
-        std::cerr << "Błąd: Folder ./public nie istnieje lub brak dostępu!\n";
-        return 1;
-    }
-
     svr.Post("/register", [&](const httplib::Request& req, httplib::Response& res) {
         json responseJson;
         try {
@@ -168,6 +163,26 @@ int main() {
         
         res.set_content(responseArray.dump(), "application/json; charset=utf-8");
     });
+
+    svr.Get("/username", [&](const httplib::Request& req, httplib::Response& res) {
+        json responseJson;
+        std::string token = extractToken(req);
+        std::string user = auth.authenticate(token);
+
+        if (user.empty()) {
+            res.status = 401;
+            responseJson["error"] = "Brak tokenu lub token wygasł. Zaloguj się ponownie";
+            res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+            return;
+        }
+        responseJson["username"] = user;
+        res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+    });
+
+    if (!svr.set_mount_point("/", "./public")) {
+        std::cerr << "Błąd: Folder ./public nie istnieje lub brak dostępu!\n";
+        return 1;
+    }
 
     std::cout << "Serwer nasluchuje na porcie 8080\n";
     svr.listen("0.0.0.0", 8080);
