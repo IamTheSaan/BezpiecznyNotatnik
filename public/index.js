@@ -131,7 +131,7 @@ async function sendNote() {
         return;
     }
     // Walidacja pól formularza
-    if (!to || quill.getText().length === 0) {
+    if (!to || quill.getText().trim().length === 0) {
         statusDiv.style.color = "red";
         statusDiv.innerText = "Podaj odbiorcę i treść notatki!";
         return;
