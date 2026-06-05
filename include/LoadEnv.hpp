@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -5,12 +7,12 @@
 
 // Funkcja czytająca plik .env i zwracająca słownik klucz-wartość
 std::map<std::string, std::string> loadEnv(const std::string& filepath = ".env") {
-    std::map<std::string, std::string> envVaraibles;
+    std::map<std::string, std::string> env;
     std::ifstream file(filepath);
     
     if (!file.is_open()) {
         std::cerr << "[OSTRZEZENIE] Nie udalo sie otworzyc pliku " << filepath << ". Upewnij sie, ze istnieje.\n";
-        return envVaraibles;
+        return env;
     }
 
     std::string line;
@@ -21,9 +23,9 @@ std::map<std::string, std::string> loadEnv(const std::string& filepath = ".env")
             std::string key = line.substr(0, delimiter);
             std::string value = line.substr(delimiter + 1);
             
-            envVaraibles[key] = value;
+            env[key] = value;
         }
     }
     file.close();
-    return envVaraibles;
+    return env;
 }

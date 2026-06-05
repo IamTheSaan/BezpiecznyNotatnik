@@ -19,7 +19,7 @@ bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
         fs::path filePath = userPath / fileName;
 
         //Otwieramy plik do zapisu
-        std::ofstream outFile(filePath);
+        std::ofstream outFile(filePath, std::ios::binary);
         if(!outFile.good()){
             std::cerr << "Plik sie nie otworzyl\n";
             return false;
@@ -46,7 +46,7 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
 
         for (const auto& entry : fs::directory_iterator(userPath)) {
             if (entry.is_regular_file()) {
-                std::ifstream inFile(entry.path());
+                std::ifstream inFile(entry.path(), std::ios::binary);
                 if (!inFile.is_open()) continue;
 
                 NoteData data;
@@ -94,7 +94,7 @@ void FileStorage::cleanup(int64_t currentTimestamp) {
 
         for (const auto& entry : fs::recursive_directory_iterator(basePath)) {
             if (entry.is_regular_file() && entry.path().extension() == ".bin") {
-                std::ifstream inFile(entry.path());
+                std::ifstream inFile(entry.path(), std::ios::binary);
                 if (!inFile.is_open()) continue;
 
                 std::string line;

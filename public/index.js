@@ -240,7 +240,7 @@ async function getNotes() {
                 <div><b>Od: </b>${note.sender}</div>
                 ${('ttl' in note) ? `<div><b>Wygasa: </b>${note.ttl}</div>` : ''} 
                 ${note.burn ? `<div style='color: orange;'>BurnOnRead</div>` : ''}
-                <div>${note.content}</div>
+                <div>${DOMPurify.sanitize(note.content)}</div>
                 ${deleteButton}`;
 
             messagesDiv.appendChild(noteDiv);
