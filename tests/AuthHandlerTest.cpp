@@ -6,11 +6,12 @@
 class AuthHandlerTest : public ::testing::Test {
 protected:
     const std::string testDbPath = "test_database.json";
+    const std::string secret = "ud5tFjzHUBeinO9i1BsFZeg5YGixAReimBmrxV0N5a8=";
     AuthHandler* authHandler;
 
     void SetUp() override {
         std::remove(testDbPath.c_str());
-        authHandler = new AuthHandler(testDbPath);
+        authHandler = new AuthHandler(testDbPath, secret);
     }
 
     void TearDown() override {
@@ -82,7 +83,7 @@ TEST_F(AuthHandlerTest, DatabasePersistence_LoadsExistingUsers) {
     authHandler->registerUser("admin", "haslo123");
     
     delete authHandler;
-    authHandler = new AuthHandler(testDbPath);
+    authHandler = new AuthHandler(testDbPath, secret);
     
     std::string token = authHandler->login("admin", "haslo123");
     

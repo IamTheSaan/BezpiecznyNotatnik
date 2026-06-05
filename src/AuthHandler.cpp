@@ -7,7 +7,7 @@
 #include <sstream>
 #include <openssl/evp.h>
 
-AuthHandler::AuthHandler(const std::string& path) : dbPath(path) {
+AuthHandler::AuthHandler(const std::string& path, const std::string& secret) : dbPath(path), JWT_SECRET(secret) {
     loadDb();
 }
 
@@ -81,7 +81,7 @@ std::string AuthHandler::login(const std::string& username, const std::string& p
         .set_type("JWS")
         .set_payload_claim("username", username)
         .set_expires_at(std::chrono::system_clock::now() + std::chrono::minutes(30)) 
-        .sign(jwt::algorithm::hs256{SECRET_KEY});
+        .sign(jwt::algorithm::hs256{JWT_SECRET});
 
     return token;
 }
@@ -92,7 +92,7 @@ std::string AuthHandler::authenticate(const std::string& token) {
     try {
         auto decoded = jwt::decode<jwt_traits>(token);
         auto verifier = jwt::verify<jwt_traits>()
-            .allow_algorithm(jwt::algorithm::hs256{SECRET_KEY})
+            .allow_algorithm(jwt::algorithm::hs256{JWT_SECRET})
             .with_issuer("auth_server");
         
         verifier.verify(decoded);

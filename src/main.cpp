@@ -1,9 +1,10 @@
 #include "httplib.h"
+#include "json.hpp"
 #include "NoteManager.hpp"
 #include "AuthHandler.hpp"
 #include "CleanupService.hpp"
+#include "LoadEnv.hpp"
 #include <iostream>
-#include <json.hpp>
 #include <chrono>
 #include <format>
 
@@ -17,10 +18,17 @@ std::string extractToken(const httplib::Request& req) {
 }
 
 int main() {
+    std::map<std::string, std::string> env = loadEnv(".env");
+
+    if (env.find("JWT_SECRET") == env.end() || env.find("CRYPTO_KEY") == env.end()) {
+        std::cerr << "[BLAD] Brak wymaganych kluczy w pliku .env! Serwer zatrzymany.\n";
+        return 1;
+    }
+
     httplib::Server svr;
-    NoteManager manager;
+    NoteManager manager(env["CRYPTO_KEY"]);
     FileStorage& storage = manager.getStorage();
-    AuthHandler auth("data/users.db");
+    AuthHandler auth("data/users.db", env["JWT_SECRET"]);
     CleanupService cleanup(storage, 30);
 
     svr.Post("/register", [&](const httplib::Request& req, httplib::Response& res) {
@@ -186,7 +194,7 @@ int main() {
 
     if (!svr.set_mount_point("/", "./public")) {
         std::cerr << "Błąd: Folder ./public nie istnieje lub brak dostępu!\n";
-        return 1;
+        return 2;
     }
 
 svr.Delete("/delete", [&](const httplib::Request& req, httplib::Response& res) {

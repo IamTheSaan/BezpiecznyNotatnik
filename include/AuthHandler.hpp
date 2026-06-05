@@ -20,12 +20,12 @@ class AuthHandler {
 private:
     std::map<std::string, UserCredentials> nameToCredentials; // username -> hasło i sól
     std::string dbPath;
-    const std::string SECRET_KEY = "SekretnyKlucz123";
+    const std::string JWT_SECRET;
     std::string hash(const std::string& pass, const std::string& salt);
     void saveDb();
     void loadDb();
 public:
-    AuthHandler(const std::string& path);
+    AuthHandler(const std::string& path, const std::string& secret);
     bool registerUser(const std::string& username, const std::string& password);
     // register jest zarezerowwane :(, zwraca true jeśli zarejestrowano, false jeśli użytkownik o podanej nazwie już istneje
     std::string login(const std::string& username, const std::string& password); // zwraca token lub ""
