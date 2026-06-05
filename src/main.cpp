@@ -117,7 +117,7 @@ int main() {
             std::string token = auth.login(username, password);
 
             if (!token.empty()) {
-                res.status = 201;
+                res.status = 200;
                 responseJson["status"] = "success";
                 responseJson["token"] = token;
             } else {
