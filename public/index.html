@@ -15,47 +15,53 @@
         .hidden {display: none;}
     </style>
 </head>
-<body>
-    <div id="authSection">
-        <h2>Logowanie / Rejestracja</h2>
-        <div class="field">
-            <input type="text" id="login" placeholder="Twój login">
-        </div>
-        <div class="field">
-            <input type="password" id="password" placeholder="Twoje hasło">
-        </div>
-        <button onclick="login()">Zaloguj się</button>
-        <button onclick="register()">Zarejestruj się</button>
-        <div id="authStatus"></div>
+<body class="container">
+    <div id="authSection" class="container loginPanel">
+            <h2>Logowanie / Rejestracja</h2>
+            <div class="field loginBox">
+                <input class="form-control" type="text" id="login" placeholder="Twój login">
+            </div>
+            <div class="field loginBox">
+                <input class="form-control" type="password" id="password" placeholder="Twoje hasło">
+            </div>
+                <div class="btn-group">
+                    <button class="btn btn-success"onclick="login()">Zaloguj się</button>
+                    <button class="btn btn-primary"onclick="register()">Zarejestruj się</button>
+                </div>
+            <div id="authStatus"></div>
     </div>
 
     <div id="appSection" style=>
-        <button onclick="logout()">Wyloguj się</button>
+        <button class="btn btn-danger" onclick="logout()">Wyloguj się</button>
 
         <h2>Wyślij bezpieczną notatkę</h2>
         <div class="field">
-            <input type="text" id="toUser" placeholder="Login odbiorcy">
+            <input class="form-control" type="text" id="toUser" placeholder="Login odbiorcy">
         </div>
         <div class="field">
             <div style="max-height: 300px;" id="editor"></div>
         </div>
-        <div class="field">
-            <label for="ttl">Czas ważności notatki:</label>
-            <select id="ttl">
+
+
+        <div class="field" style="width: 220px;">
+            <select class="form-select"id="ttl">
+                <option selected>Czas Ważności Notatki</option>
                 <option value="30">30 sekund</option> <!--Do testów-->
                 <option value="3600">1 godzina</option>
                 <option value="86400">24 godziny</option>
                 <option value="604800">7 dni</option>
             </select>
         </div>
+
+
         <div class="field">
             <input type="checkbox" id="burnOnRead">Usunąć natychmiast po przeczytaniu (Burn on read)?
         </div>
-        <button onclick="sendNote()">Wyślij</button>
+        <button class="btn btn-success" onclick="sendNote()">Wyślij</button>
         <div id="sendStatus"></div>
 
         <h2>Sprawdź skrzynkę</h2>
-        <button onclick="getNotes()">Pobierz wiadomości</button>
+        <button class="btn btn-warning" onclick="getNotes()">Pobierz wiadomości</button>
         <div id="messages"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
