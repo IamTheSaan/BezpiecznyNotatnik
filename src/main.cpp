@@ -167,7 +167,7 @@ int main() {
             if (note.expirationTime > 0) {
                 std::chrono::sys_seconds timePoint{std::chrono::seconds(note.expirationTime)};
                 auto localTimePoint = std::chrono::current_zone()->to_local(timePoint);
-                std::string date = std::format("{:%Y-%m-%d %H:%M:%S}", localTimePoint);
+                std::string date = std::format("{:%d-%m-%Y %H:%M:%S}", localTimePoint);
                 noteJson["ttl"] = date;
             }
 
