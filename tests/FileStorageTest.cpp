@@ -49,12 +49,57 @@ TEST_F(FileStorageTest, EmptyNotes) {
     EXPECT_TRUE(notes.empty());
 }
 
-TEST_F(FileStorageTest, Delete) {
-    NoteData data = {"IdABC", "A", 0, false, "B"};
-    storage->saveFile("UserC", data);
-    std::string path = testPath + "/UserC/IdABC.bin";
+TEST_F(FileStorageTest, CleanupExpired) {
+    NoteData data = {"Id123", "UserA", 100, false, "Hello"};
+    storage->saveFile("UserA", data);
     
-    ASSERT_TRUE(fs::exists(path));
-    EXPECT_TRUE(storage->deleteFile(path));
-    EXPECT_FALSE(fs::exists(path));
+    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id123.bin"));
+    
+    // Odpalamy czyszczenie z czasem 150 (150 > 100 => notatka wygasła)
+    storage->cleanup(150);
+    
+    // Plik powinien być usunięty
+    EXPECT_FALSE(fs::exists(testPath + "/UserA/Id123.bin"));
+}
+
+TEST_F(FileStorageTest, CleanupKeepsActiveNotes) {
+    NoteData data = {"Id456", "UserA", 200, false, "Hello"};
+    storage->saveFile("UserA", data);
+    
+    // Odpalamy czyszczenie z czasem 150 (150 < 200 => notatka jeszcze nie wygasła)
+    storage->cleanup(150);
+    
+    // Plik nadal powinien istnieć
+    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id456.bin"));
+}
+
+TEST_F(FileStorageTest, CleanupIgnorePermanent) {
+    // 0 - notatka bezterminowa
+    NoteData data = {"Id789", "UserA", 0, false, "Hello"};
+    storage->saveFile("UserA", data);
+    
+    // Czyszczenie w przyszłości
+    storage->cleanup(999999);
+    
+    // Plik z czasem 0 musi przetrwać sprzątanie
+    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id789.bin"));
+}
+
+TEST_F(FileStorageTest, CleanupMixed) {
+    NoteData expired = {"Id1", "UserB", 50, false, "Text"};
+    NoteData active = {"Id2", "UserB", 300, false, "Text"};
+    NoteData permanent = {"Id3", "UserB", 0, false, "Text"};
+    
+    storage->saveFile("UserB", expired);
+    storage->saveFile("UserB", active);
+    storage->saveFile("UserB", permanent);
+    
+    storage->cleanup(100);
+    
+    EXPECT_FALSE(fs::exists(testPath + "/UserB/Id1.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserB/Id2.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserB/Id3.bin"));
+    
+    auto notes = storage->readFiles("UserB");
+    EXPECT_EQ(notes.size(), 2);
 }

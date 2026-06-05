@@ -13,14 +13,16 @@ const quill = new Quill("#editor", {
 });
 
 // Zarządzanie widokami - logowanie/rejestrcja lub właściwa aplikacja
-function checkAuth() {
-    const token = localStorage.getItem("jwt_token");
-    if (token) {
-        document.getElementById("authSection").classList.add("hidden");
-        document.getElementById("appSection").classList.remove("hidden");
-    } else {
+async function checkAuth() {
+    const username = await authenticate();
+    if (!username) {
         document.getElementById("authSection").classList.remove("hidden");
         document.getElementById("appSection").classList.add("hidden");
+    } else {
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("appSection").classList.remove("hidden");
+
+        document.getElementById("username").innerText = username;
     }
 }
 
@@ -52,7 +54,7 @@ async function register() {
             statusDiv.innerText = "Konto utowrzone. Możesz się teraz zalogować.";
         } else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + result.error;
+            statusDiv.innerText = "Błąd: " + result.error;
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -78,7 +80,7 @@ async function login() {
         const response = await fetch("/login", {
             method: "POST",
             headers: {"Content-Type": "application/json; charset=utf-8"},
-            body: JSON.stringify({username: user, password: pass}) // Konwersja obiektu JS na string JSON
+            body: JSON.stringify({username: user, password: pass})
         });
 
         const result = await response.json();
@@ -94,7 +96,7 @@ async function login() {
             checkAuth(); // Przełącza widok na aplikację
         } else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + result.error;
+            statusDiv.innerText = "Błąd: " + result.error;
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -111,7 +113,6 @@ function logout() {
     // Czyszczenie edytora i skrzynki
     quill.setText("");
     document.getElementById("messages").innerHTML = "";
-    document.getElementById("")
 
     checkAuth(); // powrót do logowania
 }
@@ -126,12 +127,11 @@ async function sendNote() {
     const textHTML = quill.root.innerHTML;
 
     if (!token) {
-        statusDiv.style.color = "red";
-        statusDiv.innerText = "Zaloguj się!";
+        checkAuth();
         return;
     }
     // Walidacja pól formularza
-    if (!to || quill.getText().length === 0) {
+    if (!to || quill.getText().trim().length === 0) {
         statusDiv.style.color = "red";
         statusDiv.innerText = "Podaj odbiorcę i treść notatki!";
         return;
@@ -166,8 +166,11 @@ async function sendNote() {
             document.getElementById("toUser").value = "";
             document.getElementById("burnOnRead").checked = false;
         } else {
+            if (response.status === 401) logout();
+            else {
             statusDiv.style.color = "red";
-            statusDiv.innerText = "Błąd serwera: " + result.error;
+            statusDiv.innerText = "Błąd: " + result.error;
+            }
         }
     } catch (error) {
         statusDiv.style.color = "red";
@@ -175,12 +178,26 @@ async function sendNote() {
     }
 }
 
+async function saveNote() {
+    const statusDiv = document.getElementById("sendStatus");
+    const username = document.getElementById("username").innerText;
+
+    if (!username) {
+        statusDiv.style.color = "red";
+        statusDiv.innerText = "Błąd: Nie udało pobrać się loginu.";
+        return;
+    }
+
+    document.getElementById("toUser").value = username;
+    sendNote();
+}
+
 async function getNotes() {
     const token = localStorage.getItem('jwt_token');
     const messagesDiv = document.getElementById("messages");
 
     if (!token) {
-        messagesDiv.innerHTML = "<p style='color: red'>Zaloguj się!</p>";
+        checkAuth();
         return;
     }
 
@@ -196,7 +213,7 @@ async function getNotes() {
 
         if (!response.ok) {
             if (response.status === 401) logout();
-            messagesDiv.innerHTML = `<p style="color: red">Błąd serwera: ${result.error}</p>`;
+            else messagesDiv.innerHTML = `<p style="color: red">Błąd: ${result.error}</p>`;
             return;
         }
 
@@ -205,24 +222,84 @@ async function getNotes() {
             return;
         }
 
+        result.sort((a, b) => (b.burn === true) - (a.burn === true));
+
         messagesDiv.innerHTML = "";
         result.forEach(note => {
             // Tworzymy nowy element div dla pojedynczej notatki
             const noteDiv = document.createElement("div");
+            noteDiv.id = note.id;
+
+            let deleteButton = "";
+            if (!note.burn) {
+                deleteButton = `<button onclick="deleteNote('${note.id}')">Usuń</button>`;
+            }
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
-                <div>ID: ${note.id}</div>
-                <div>Od: ${note.sender}</div>
-                <div>Wygasa: ${note.ttl}</div>
-                <div>BurnOnRead: ${note.burn ? "TAK" : "NIE"}</div>
-                <div">${note.content}</div>`;
+                <div><b>Od: </b>${note.sender}</div>
+                ${('ttl' in note) ? `<div><b>Wygasa: </b>${note.ttl}</div>` : ''} 
+                ${note.burn ? `<div style='color: orange;'>BurnOnRead</div>` : ''}
+                <div>${DOMPurify.sanitize(note.content)}</div>
+                ${deleteButton}`;
 
             messagesDiv.appendChild(noteDiv);
         });
 
     } catch (error) {
         messagesDiv.innerHTML = "<p style='color: red;'>Błąd: Nie udało się pobrać poczty.</p>";
+    }
+}
+
+async function deleteNote(id) {
+    const token = localStorage.getItem("jwt_token");
+
+    if (!token) {
+        checkAuth();
+        return;
+    }
+
+    try {
+        const response = await fetch("/delete", {
+            method: "DELETE",
+            headers: {"Content-Type": "application/json; charset=utf-8", "Authorization": token},
+            body: JSON.stringify({id: id}) // Konwersja obiektu JS na string JSON
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === "success") {
+            const note = document.getElementById(id)
+            if (note) {
+                note.remove();
+            }
+        } else {
+            if (response.status === 401) logout();
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async function authenticate() {
+    const token = localStorage.getItem("jwt_token");
+    
+    if (!token) return "";
+
+    try {
+        const response = await fetch("/authenticate", {
+            method: "GET",
+            headers: {"Authorization": token}
+        });
+        const result = await response.json();
+
+        if (response.ok) {
+            return result.username;
+        } else {
+            return "";
+        }
+    } catch (error) {
+        return "";
     }
 }
 

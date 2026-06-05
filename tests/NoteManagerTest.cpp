@@ -7,9 +7,10 @@ namespace fs = std::filesystem;
 class NoteManagerTest : public ::testing::Test {
 protected:
     NoteManager* manager;
+    std::string key = "q7M8zHR9OylOCqwnQa5t7pYVutAYjhQLdN+U76kW5hA=";
 
     void SetUp() override {
-        manager = new NoteManager();
+        manager = new NoteManager(key);
         std::string path = manager->getStorage().getBasePath();
         if (fs::exists(path)) fs::remove_all(path);
         fs::create_directories(path);

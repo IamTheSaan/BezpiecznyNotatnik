@@ -12,8 +12,9 @@ private:
     Context crypto;  
     FileStorage storage;
 public:
-    NoteManager() : crypto(std::make_unique<ChaCha20>("+%v4g8nf6dS#@.zC->,KBJ6>YICQ&HeR")) {}
+    NoteManager(const std::string& key) : crypto(std::make_unique<ChaCha20>(key)) {}
     bool sendNote(std::string from, std::string to, std::string text, int secondsToLive, bool burnOnRead);
+    bool deleteNote(std::string user, std::string id);
     std::vector<NoteData> getInbox(std::string username);
-    FileStorage& getStorage() { return storage; } // do testów
+    FileStorage& getStorage() { return storage; }
 };

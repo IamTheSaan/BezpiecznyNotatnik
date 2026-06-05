@@ -6,6 +6,7 @@
 namespace fs = std::filesystem;
 
 bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
+    std::lock_guard<std::mutex> lock(mutex_);
     try {
         // Tworzymy ścieżkę do folderu użytkownika
         fs::path userPath = fs::path(basePath) / recipient;
@@ -19,14 +20,14 @@ bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
         fs::path filePath = userPath / fileName;
 
         //Otwieramy plik do zapisu
-        std::ofstream outFile(filePath);
+        std::ofstream outFile(filePath, std::ios::binary);
         if(!outFile.good()){
             std::cerr << "Plik sie nie otworzyl\n";
             return false;
         }
+        outFile << data.expirationTime << "\n"; // zapisujemy ttl w pierwszej linijsce aby ułatwić pracę CleanupService
         outFile << data.id << "\n";
         outFile << data.sender << "\n";
-        outFile << data.expirationTime << "\n";
         outFile << data.burnOnRead << "\n";
         outFile << data.content;
         outFile.close();
@@ -39,6 +40,7 @@ bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
 }
 
 std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<NoteData> notes;
     try {
         fs::path userPath = fs::path(basePath) / user;
@@ -46,15 +48,15 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
 
         for (const auto& entry : fs::directory_iterator(userPath)) {
             if (entry.is_regular_file()) {
-                std::ifstream inFile(entry.path());
+                std::ifstream inFile(entry.path(), std::ios::binary);
                 if (!inFile.is_open()) continue;
 
                 NoteData data;
                 std::string line;
-                std::getline(inFile, data.id);
-                std::getline(inFile, data.sender);
                 std::getline(inFile, line);
                 data.expirationTime = std::stoll(line);
+                std::getline(inFile, data.id);
+                std::getline(inFile, data.sender);
                 std::getline(inFile, line);
                 if(line=="1") data.burnOnRead=true;
                 else data.burnOnRead=false;
@@ -76,8 +78,10 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
     return notes;
 }
 
-bool FileStorage::deleteFile(const std::string& path) {
+bool FileStorage::deleteById(const std::string& user, const std::string& id) {
+    std::lock_guard<std::mutex> lock(mutex_);
     try {
+        fs::path path = fs::path(basePath) / user / (id + ".bin");
         return fs::remove(path);
     }
     catch (const fs::filesystem_error& e) {
@@ -86,13 +90,44 @@ bool FileStorage::deleteFile(const std::string& path) {
     }
 }
 
-bool FileStorage::deleteById(const std::string& user, const std::string& id) {
+void FileStorage::cleanup(int64_t currentTimestamp) {
+    std::lock_guard<std::mutex> lock(mutex_);
     try {
-        fs::path path = fs::path(basePath) / user / (id + ".bin");
-        return fs::remove(path);
+        if (!fs::exists(basePath)) return;
+        int deletedCount = 0;
+
+        for (const auto& entry : fs::recursive_directory_iterator(basePath)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".bin") {
+                std::ifstream inFile(entry.path(), std::ios::binary);
+                if (!inFile.is_open()) continue;
+
+                std::string line;
+                // czytamy ttl
+                if (std::getline(inFile, line)) {
+                    inFile.close(); // zamykamy plik przed ewentualnym usunięciem
+                    try {
+                        int64_t expirationTime = std::stoll(line);
+
+                        if (expirationTime <= currentTimestamp && expirationTime > 0) {
+                            if (fs::remove(entry.path())) {
+                                deletedCount++;
+                            }
+                        }
+                    }
+                    catch (const std::exception& e) {
+                        std::cerr << "[Cleanup] Blad: " << e.what() << "\n";
+                    }
+                } else {
+                    inFile.close();
+                }
+            }
+        }
+
+        if (deletedCount > 0) {
+            std::cout << "[Cleanup] Usunieto z dysku wygasle notatki: " << deletedCount << "\n";
+        }
     }
-    catch (const fs::filesystem_error& e) {
-        std::cerr << "Blad podczas usuwania pliku: " << e.what() << "\n";
-        return false;
+    catch (const std::exception& e) {
+        std::cerr << "[Cleanup] Blad: " << e.what() << "\n";
     }
 }
