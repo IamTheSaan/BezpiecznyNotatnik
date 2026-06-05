@@ -14,15 +14,15 @@ const quill = new Quill("#editor", {
 
 // Zarządzanie widokami - logowanie/rejestrcja lub właściwa aplikacja
 async function checkAuth() {
-    const token = localStorage.getItem("jwt_token");
-    if (token) {
-        document.getElementById("authSection").classList.add("hidden");
-        document.getElementById("appSection").classList.remove("hidden");
-        const username = await getUsername();
-        document.getElementById("username").innerText = username;
-    } else {
+    const username = await authenticate();
+    if (!username) {
         document.getElementById("authSection").classList.remove("hidden");
         document.getElementById("appSection").classList.add("hidden");
+    } else {
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("appSection").classList.remove("hidden");
+
+        document.getElementById("username").innerText = username;
     }
 }
 
@@ -281,13 +281,13 @@ async function deleteNote(id) {
     }
 }
 
-async function getUsername() {
+async function authenticate() {
     const token = localStorage.getItem("jwt_token");
     
     if (!token) return "";
 
     try {
-        const response = await fetch("/username", {
+        const response = await fetch("/authenticate", {
             method: "GET",
             headers: {"Authorization": token}
         });

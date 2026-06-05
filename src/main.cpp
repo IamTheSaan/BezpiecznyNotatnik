@@ -177,7 +177,7 @@ int main() {
         res.set_content(responseArray.dump(), "application/json; charset=utf-8");
     });
 
-    svr.Get("/username", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Get("/authenticate", [&](const httplib::Request& req, httplib::Response& res) {
         json responseJson;
         std::string token = extractToken(req);
         std::string user = auth.authenticate(token);
