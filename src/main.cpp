@@ -17,6 +17,14 @@ std::string extractToken(const httplib::Request& req) {
     return "";
 }
 
+bool isSafe(const std::string& s) {
+    if (s.empty()) return false;
+    for (char c : s) {
+        if (!isalnum(c) && c != '_' && c != '-') return false; // sprawdzamy niedozwolone znaki
+    }
+    return true;
+}
+
 int main() {
     std::map<std::string, std::string> env = loadEnv(".env");
 
@@ -46,6 +54,20 @@ int main() {
 
             std::string username = inputJson["username"];
             std::string password = inputJson["password"];
+
+            if (!isSafe(username)) {
+                res.status = 400;
+                responseJson["error"] = "Login może zawierać jedynie lietry, cyfry, _ i -";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            if (username.size() < 8 || password.size() < 8 || username.size() > 64 || password.size() > 64) {
+                res.status = 400;
+                responseJson["error"] = "Login oraz hasło powinny zawierać od 8 do 64 znaków";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
 
             if (auth.registerUser(username, password)) {
                 res.status = 201;
@@ -77,6 +99,20 @@ int main() {
 
             std::string username = inputJson["username"];
             std::string password = inputJson["password"];
+
+            if (!isSafe(username)) {
+                res.status = 400;
+                responseJson["error"] = " Login może zawierać jedynie lietry, cyfry, _ i -";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            if (username.size() < 8 || password.size() < 8 || username.size() > 64 || password.size() > 64) {
+                res.status = 400;
+                responseJson["error"] = "Login oraz hasło powinny zawierać od 8 do 64 znaków";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
 
             std::string token = auth.login(username, password);
 
@@ -123,6 +159,20 @@ int main() {
             std::string text = inputJson["text"];
             int ttl = inputJson["ttl"];
             bool burnOnRead = inputJson["burn"];
+
+            if (!isSafe(to)) {
+                res.status = 400;
+                responseJson["error"] = "Login odbiorcy może zawierać jedynie lietry, cyfry, _ i -";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            if (to.size() < 8 || to.size() > 64) {
+                res.status = 400;
+                responseJson["error"] = "Login odbiorcy powienien zawierać od 8 do 64 znaków";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
 
             if (manager.sendNote(from, to, text, ttl, burnOnRead)) {
                 res.status = 201;
