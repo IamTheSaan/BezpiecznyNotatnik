@@ -1,5 +1,5 @@
 #include <CryptoProvider.hpp>
-#include <random>
+#include <openssl/rand.h>
 #include <stdexcept>
 #include <cstring>
 #include <algorithm>
@@ -23,13 +23,21 @@ std::string Context::decrypt(const std::string& data) const {
 
 std::string Context::generateId() {
     const std::string CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    static std::mt19937 rng(std::random_device{}());
-    static std::uniform_int_distribution<int> dist(0, CHARACTERS.size() - 1);
+    const int id_length = 16;
+    const int limit = 255-255%CHARACTERS.size();
 
     std::string id = "";
-    for (int i = 0; i < 16; i++) {
-        id += CHARACTERS[(dist(rng))];
+    id.reserve(id_length);
+    while (id.length() < id_length) {
+        unsigned char random_byte;
+        RAND_bytes(&random_byte, 1);
+
+        if (random_byte < limit) {
+            int index = random_byte % CHARACTERS.size();
+            id += CHARACTERS[index];
+        }
     }
+
     return id;
 }
 
@@ -130,11 +138,7 @@ std::string ChaCha20::process(const std::string& data, const std::vector<uint8_t
 
 std::string ChaCha20::encrypt(const std::string& data) const{
     std::vector<uint8_t> nonce(12);
-    static std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(0, 255);
-    for (int i = 0; i < 12; ++i) {
-        nonce[i] = dist(rng);
-    }
+    RAND_bytes(nonce.data(), nonce.size());
 
     std::string cipherText = process(data, nonce);
     

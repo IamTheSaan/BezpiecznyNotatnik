@@ -1,5 +1,5 @@
 #include "AuthHandler.hpp"
-#include <random>
+#include <openssl/rand.h>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -34,12 +34,18 @@ std::string AuthHandler::hash(const std::string& pass, const std::string& salt) 
 
 std::string generateSalt() {
     const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(0, CHARACTERS.size()-1);
-    
+    const int salt_length=16;
+    const int limit=255-255%CHARACTERS.size();
     std::string salt = "";
-    for (int i = 0; i < 16; i++) {
-        salt += CHARACTERS[dist(rng)];
+    salt.reserve(16);
+    while(salt.length()<salt_length){
+        unsigned char random_byte;
+        RAND_bytes(&random_byte, 1);
+
+        if (random_byte < limit) {
+            int index = random_byte % CHARACTERS.size();
+            salt += CHARACTERS[index];
+        }
     }
     return salt;
 }
