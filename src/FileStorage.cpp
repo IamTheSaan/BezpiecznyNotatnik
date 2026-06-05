@@ -6,6 +6,7 @@
 namespace fs = std::filesystem;
 
 bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
+    std::lock_guard<std::mutex> lock(mutex_);
     try {
         // Tworzymy ścieżkę do folderu użytkownika
         fs::path userPath = fs::path(basePath) / recipient;
@@ -39,6 +40,7 @@ bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
 }
 
 std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<NoteData> notes;
     try {
         fs::path userPath = fs::path(basePath) / user;
@@ -77,6 +79,7 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
 }
 
 bool FileStorage::deleteById(const std::string& user, const std::string& id) {
+    std::lock_guard<std::mutex> lock(mutex_);
     try {
         fs::path path = fs::path(basePath) / user / (id + ".bin");
         return fs::remove(path);
@@ -88,6 +91,7 @@ bool FileStorage::deleteById(const std::string& user, const std::string& id) {
 }
 
 void FileStorage::cleanup(int64_t currentTimestamp) {
+    std::lock_guard<std::mutex> lock(mutex_);
     try {
         if (!fs::exists(basePath)) return;
         int deletedCount = 0;
