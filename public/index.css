@@ -57,3 +57,20 @@ body {
     margin:5px;
 
 }
+
+@keyframes pulses {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); /* Czerwony kolor bootstrapowy */
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); /* Rozmycie cienia na zewnątrz */
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+.BurnOnRead{
+    animation: pulses 2s infinite;
+}
+

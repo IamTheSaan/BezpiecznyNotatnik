@@ -239,10 +239,10 @@ async function getNotes() {
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
-            <div class="border rounded p-3 my-3">
+            <div class="border rounded p-3 my-3 ${note.burn ? `BurnOnRead` : ''}">
                 <div><b>Od: </b>${note.sender}</div>
                 ${('ttl' in note) ? `<div><b>Wygasa: </b>${note.ttl}</div>` : ''} 
-                ${note.burn ? `<div style='color: orange;'>BurnOnRead</div>` : ''}
+                ${note.burn ? `<div style='color: red;'>Uwaga notatka zostanie usunięta po przeczytaniu!</div>` : ''}
                 <div>${DOMPurify.sanitize(note.content)}</div>
                 ${deleteButton}
             </div>`;
