@@ -272,6 +272,13 @@ svr.Delete("/delete", [&](const httplib::Request& req, httplib::Response& res) {
 
             std::string id = inputJson["id"];
 
+            if (!isSafe(id)) {
+                res.status = 400;
+                responseJson["error"] = "Niepoprawne ID";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
             if (manager.deleteNote(user, id)) {
                 res.status = 200;
                 responseJson["status"] = "success";
