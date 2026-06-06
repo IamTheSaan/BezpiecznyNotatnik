@@ -92,7 +92,7 @@ async function login() {
             document.getElementById("login").value = "";
             document.getElementById("password").value = "";
             statusDiv.innerText = "";
-
+            document.querySelector('.page-content').classList.add('app-mode');
             checkAuth(); // Przełącza widok na aplikację
         } else {
             statusDiv.style.color = "red";
@@ -113,6 +113,8 @@ function logout() {
     // Czyszczenie edytora i skrzynki
     quill.setText("");
     document.getElementById("messages").innerHTML = "";
+    // Wewnątrz funkcji logout():
+document.querySelector('.page-content').classList.remove('app-mode');
 
     checkAuth(); // powrót do logowania
 }

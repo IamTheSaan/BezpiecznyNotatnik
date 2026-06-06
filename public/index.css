@@ -1,17 +1,59 @@
-body {
-    margin: 20px;
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background-color: #14151a;
 }
+
+body {
+    padding: 0.35cm; 
+    display: flex;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border: 0.5cm solid #a22020;
+    border-radius: 30px;
+    background-color: #ffffff; 
+    
+    /* Domyślnie: idealne centrowanie dla okna logowania */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    transition: all 0.3s ease; /* Płynne przejście przy rozszerzaniu strony */
+}
+
+/* NOWOŚĆ: Styl aktywowany PO ZALOGOWANIU */
+.page-content.app-mode {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Przykleja zawartość do góry */
+    align-items: stretch;        /* Rozciąga elementy na boki */
+    padding: 40px 10%;           /* Duży, komfortowy odstęp od czerwonej ramki (np. 10% szerokości ekranu) */
+    overflow-y: auto;            /* Wygodny scrollbar, jeśli notatek będzie bardzo dużo */
+}
+
+/* Poprawka dla panelu logowania, aby nie psuł się na różnych ekranach */
+.loginPanel {
+    background-color: gray;
+    opacity: 0.7;
+    width: 100%;
+    max-width: 450px; /* Blokujemy rozsądną szerokość panelu na desktopie */
+    border-radius: 15px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .loginBox{
     margin:5px;
 
-}
-.loginPanel{
-    display: grid;
-    place-items: centre;
-    background-color: gray;
-    opacity: 0.7;
-    width: 30%;
-    height: 40%;
-    border-radius: 15px;
-    padding: 30px;
 }
