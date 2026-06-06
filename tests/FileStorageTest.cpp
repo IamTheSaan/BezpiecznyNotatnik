@@ -24,7 +24,7 @@ TEST_F(FileStorageTest, CreateFile) {
     bool result = storage->saveFile("Recipient", data);
     
     EXPECT_TRUE(result);
-    EXPECT_TRUE(fs::exists(testPath + "/Recipient/IdABC.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/Recipient/IdABC.enc"));
 }
 
 TEST_F(FileStorageTest, CreateDirectory) {
@@ -53,13 +53,13 @@ TEST_F(FileStorageTest, CleanupExpired) {
     NoteData data = {"Id123", "UserA", 100, false, "Hello"};
     storage->saveFile("UserA", data);
     
-    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id123.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id123.enc"));
     
     // Odpalamy czyszczenie z czasem 150 (150 > 100 => notatka wygasła)
     storage->cleanup(150);
     
     // Plik powinien być usunięty
-    EXPECT_FALSE(fs::exists(testPath + "/UserA/Id123.bin"));
+    EXPECT_FALSE(fs::exists(testPath + "/UserA/Id123.enc"));
 }
 
 TEST_F(FileStorageTest, CleanupKeepsActiveNotes) {
@@ -70,7 +70,7 @@ TEST_F(FileStorageTest, CleanupKeepsActiveNotes) {
     storage->cleanup(150);
     
     // Plik nadal powinien istnieć
-    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id456.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id456.enc"));
 }
 
 TEST_F(FileStorageTest, CleanupIgnorePermanent) {
@@ -82,7 +82,7 @@ TEST_F(FileStorageTest, CleanupIgnorePermanent) {
     storage->cleanup(999999);
     
     // Plik z czasem 0 musi przetrwać sprzątanie
-    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id789.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserA/Id789.enc"));
 }
 
 TEST_F(FileStorageTest, CleanupMixed) {
@@ -96,9 +96,9 @@ TEST_F(FileStorageTest, CleanupMixed) {
     
     storage->cleanup(100);
     
-    EXPECT_FALSE(fs::exists(testPath + "/UserB/Id1.bin"));
-    EXPECT_TRUE(fs::exists(testPath + "/UserB/Id2.bin"));
-    EXPECT_TRUE(fs::exists(testPath + "/UserB/Id3.bin"));
+    EXPECT_FALSE(fs::exists(testPath + "/UserB/Id1.enc"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserB/Id2.enc"));
+    EXPECT_TRUE(fs::exists(testPath + "/UserB/Id3.enc"));
     
     auto notes = storage->readFiles("UserB");
     EXPECT_EQ(notes.size(), 2);

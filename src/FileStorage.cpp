@@ -1,7 +1,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include <FileStorage.hpp>
+#include "FileStorage.hpp"
+#include "base64.h"
 
 namespace fs = std::filesystem;
 
@@ -16,11 +17,11 @@ bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
             fs::create_directories(userPath);
         }
 
-        std::string fileName = data.id + ".bin";
+        std::string fileName = data.id + ".enc";
         fs::path filePath = userPath / fileName;
 
         //Otwieramy plik do zapisu
-        std::ofstream outFile(filePath, std::ios::binary);
+        std::ofstream outFile(filePath);
         if(!outFile.good()){
             std::cerr << "Plik sie nie otworzyl\n";
             return false;
@@ -29,7 +30,7 @@ bool FileStorage::saveFile(const std::string& recipient, const NoteData& data) {
         outFile << data.id << "\n";
         outFile << data.sender << "\n";
         outFile << data.burnOnRead << "\n";
-        outFile << data.content;
+        outFile << base64_encode(data.content);
         outFile.close();
         return true;
     }
@@ -48,7 +49,7 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
 
         for (const auto& entry : fs::directory_iterator(userPath)) {
             if (entry.is_regular_file()) {
-                std::ifstream inFile(entry.path(), std::ios::binary);
+                std::ifstream inFile(entry.path());
                 if (!inFile.is_open()) continue;
 
                 NoteData data;
@@ -60,12 +61,8 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
                 std::getline(inFile, line);
                 if(line=="1") data.burnOnRead=true;
                 else data.burnOnRead=false;
-                std::string content, temp;
-                while (std::getline(inFile, temp)) {
-                    content += temp;
-                    if (!inFile.eof()) content += "\n";
-                }
-                data.content = content;
+                std::getline(inFile, line);
+                data.content = base64_decode(line);
 
                 notes.push_back(data);
             }
@@ -81,7 +78,7 @@ std::vector<NoteData> FileStorage::readFiles(const std::string& user) {
 bool FileStorage::deleteById(const std::string& user, const std::string& id) {
     std::lock_guard<std::mutex> lock(mutex_);
     try {
-        fs::path path = fs::path(basePath) / user / (id + ".bin");
+        fs::path path = fs::path(basePath) / user / (id + ".enc");
         return fs::remove(path);
     }
     catch (const fs::filesystem_error& e) {
@@ -97,8 +94,8 @@ void FileStorage::cleanup(int64_t currentTimestamp) {
         int deletedCount = 0;
 
         for (const auto& entry : fs::recursive_directory_iterator(basePath)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".bin") {
-                std::ifstream inFile(entry.path(), std::ios::binary);
+            if (entry.is_regular_file() && entry.path().extension() == ".enc") {
+                std::ifstream inFile(entry.path());
                 if (!inFile.is_open()) continue;
 
                 std::string line;

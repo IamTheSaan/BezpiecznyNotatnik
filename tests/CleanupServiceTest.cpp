@@ -62,9 +62,9 @@ TEST_F(CleanupServiceTest, RemovesExpiredFiles) {
     NoteData activeData = {"IdActive", "User", 10413788400, false, "Hello"}; // rok 2300 - nie uruchamiać później ;)
     storage->saveFile("User", activeData);
 
-    EXPECT_TRUE(fs::exists(testPath + "/User/IdExpired.bin"));
-    EXPECT_TRUE(fs::exists(testPath + "/User/IdPermanent.bin"));
-    EXPECT_TRUE(fs::exists(testPath + "/User/IdActive.bin"));
+    EXPECT_TRUE(fs::exists(testPath + "/User/IdExpired.enc"));
+    EXPECT_TRUE(fs::exists(testPath + "/User/IdPermanent.enc"));
+    EXPECT_TRUE(fs::exists(testPath + "/User/IdActive.enc"));
     
     CleanupService service(*storage, 1);
     service.start();
@@ -74,7 +74,7 @@ TEST_F(CleanupServiceTest, RemovesExpiredFiles) {
     
     service.stop();
     
-    EXPECT_FALSE(fs::exists(testPath + "/User/IdExpired.bin"));
-    EXPECT_TRUE(fs::exists(testPath + "/User/IdPermanent.bin"));
-    EXPECT_TRUE(fs::exists(testPath + "/User/IdActive.bin"));
+    EXPECT_FALSE(fs::exists(testPath + "/User/IdExpired.enc"));
+    EXPECT_TRUE(fs::exists(testPath + "/User/IdPermanent.enc"));
+    EXPECT_TRUE(fs::exists(testPath + "/User/IdActive.enc"));
 }
