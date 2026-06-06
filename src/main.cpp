@@ -174,6 +174,20 @@ int main() {
                 return;
             }
 
+            if (ttl < -1 || ttl > 31536000) { // 365 dni
+                res.status = 400;
+                responseJson["error"] = "Niepoprawny ttl";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
+            if (text.size() > 1000000) { // około 1MB
+                res.status = 400;
+                responseJson["error"] = "Przekroczono maksymalną długość notatki";
+                res.set_content(responseJson.dump(), "application/json; charset=utf-8");
+                return;
+            }
+
             if (manager.sendNote(from, to, text, ttl, burnOnRead)) {
                 res.status = 201;
                 responseJson["status"] = "success";
