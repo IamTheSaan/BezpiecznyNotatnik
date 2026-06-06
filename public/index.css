@@ -42,7 +42,7 @@ body {
 
 /* Poprawka dla panelu logowania, aby nie psuł się na różnych ekranach */
 .loginPanel {
-    background-color: gray;
+    background-color: lightgray;
     opacity: 0.7;
     width: 100%;
     max-width: 450px; /* Blokujemy rozsądną szerokość panelu na desktopie */

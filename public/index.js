@@ -234,17 +234,18 @@ async function getNotes() {
 
             let deleteButton = "";
             if (!note.burn) {
-                deleteButton = `<button onclick="deleteNote('${note.id}')">Usuń</button>`;
+                deleteButton = `<button class="btn btn-danger" onclick="deleteNote('${note.id}')">Usuń</button>`;
             }
 
             // Wstrzykujemy nadawcę oraz oryginalny, sformatowany kod HTML z edytora Quill
             noteDiv.innerHTML = `
+            <div class="border rounded p-3 my-3">
                 <div><b>Od: </b>${note.sender}</div>
                 ${('ttl' in note) ? `<div><b>Wygasa: </b>${note.ttl}</div>` : ''} 
                 ${note.burn ? `<div style='color: orange;'>BurnOnRead</div>` : ''}
                 <div>${DOMPurify.sanitize(note.content)}</div>
-                ${deleteButton}`;
-
+                ${deleteButton}
+            </div>`;
             messagesDiv.appendChild(noteDiv);
         });
 
