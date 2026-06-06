@@ -21,6 +21,7 @@ async function checkAuth() {
     } else {
         document.getElementById("authSection").classList.add("hidden");
         document.getElementById("appSection").classList.remove("hidden");
+        document.querySelector('.page-content').classList.add('app-mode');
 
         document.getElementById("username").innerText = username;
     }
@@ -92,7 +93,6 @@ async function login() {
             document.getElementById("login").value = "";
             document.getElementById("password").value = "";
             statusDiv.innerText = "";
-            document.querySelector('.page-content').classList.add('app-mode');
             checkAuth(); // Przełącza widok na aplikację
         } else {
             statusDiv.style.color = "red";
