@@ -306,4 +306,6 @@ async function authenticate() {
     }
 }
 
-checkAuth(); // Uruchamiane po otawciu strony
+checkAuth().then(() => {
+    document.body.style.visibility = 'visible';
+});

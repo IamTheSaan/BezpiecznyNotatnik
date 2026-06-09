@@ -11,6 +11,7 @@ body {
     padding: 0.35cm; 
     display: flex;
     flex-direction: column;
+    visibility: hidden;
 }
 
 .page-content {
@@ -22,30 +23,27 @@ body {
     border-radius: 30px;
     background-color: #ffffff; 
     
-    /* Domyślnie: idealne centrowanie dla okna logowania */
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
-    transition: all 0.3s ease; /* Płynne przejście przy rozszerzaniu strony */
+    transition: all 0.3s ease;
 }
 
-/* NOWOŚĆ: Styl aktywowany PO ZALOGOWANIU */
 .page-content.app-mode {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Przykleja zawartość do góry */
-    align-items: stretch;        /* Rozciąga elementy na boki */
-    padding: 40px 10%;           /* Duży, komfortowy odstęp od czerwonej ramki (np. 10% szerokości ekranu) */
-    overflow-y: auto;            /* Wygodny scrollbar, jeśli notatek będzie bardzo dużo */
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 40px 10%;
+    overflow-y: auto;
 }
 
-/* Poprawka dla panelu logowania, aby nie psuł się na różnych ekranach */
 .loginPanel {
     background-color: lightgray;
     opacity: 0.7;
     width: 100%;
-    max-width: 450px; /* Blokujemy rozsądną szerokość panelu na desktopie */
+    max-width: 450px;
     border-radius: 15px;
     padding: 30px;
     display: flex;
